@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <title>MapLibre Lat/Lng Finder</title>
-  <!-- MapLibreのCSS -->
+  <title>MapLibre Lat/Lng Finder (Osaka)</title>
+  <!-- MapLibre GL CSS -->
   <link
     href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css"
     rel="stylesheet"
@@ -12,11 +12,14 @@
     body {
       margin: 0;
       padding: 0;
+      font-family: sans-serif;
     }
+
     #map {
       width: 100%;
       height: 90vh;
     }
+
     #search-container {
       display: flex;
       flex-direction: row;
@@ -24,6 +27,7 @@
       align-items: center;
       margin: 10px 0;
     }
+
     #search-input {
       width: 300px;
       height: 30px;
@@ -31,18 +35,26 @@
       margin-right: 10px;
       padding: 5px;
     }
+
     #search-button {
       height: 30px;
       font-size: 14px;
       padding: 5px 10px;
       cursor: pointer;
     }
-    /* 右クリック時に表示する小さなポップアップ */
+
     .custom-popup {
       background-color: white;
       border: 1px solid black;
       padding: 6px;
       font-size: 14px;
+      cursor: pointer;
+      transition: opacity 0.8s ease; /* フェードアウト用 */
+    }
+
+    /* フェードアウト用クラス */
+    .fade-out {
+      opacity: 0 !important;
     }
   </style>
 </head>
@@ -66,9 +78,12 @@
     // 地図の初期化
     const map = new maplibregl.Map({
       container: 'map',
-      // デモ用のスタイル（OpenMapTiles/OSM）
-      style: 'https://demotiles.maplibre.org/style.json',
-      center: [139.767125, 35.681236], // [経度, 緯度]
+      /*
+        例として tile.openstreetmap.jp 提供のベクトルタイルスタイルを使用
+        ※ 他のベクトルタイルスタイルを使う場合は style の値を差し替えてください
+      */
+      style: 'https://tile.openstreetmap.jp/styles/osm-bright/style.json',
+      center: [135.5022, 34.6937], // 大阪市付近 [経度, 緯度]
       zoom: 13
     });
 
@@ -77,31 +92,41 @@
       const lng = e.lngLat.lng.toFixed(6);
       const lat = e.lngLat.lat.toFixed(6);
 
-      // すでにポップアップがある場合は削除（重ならないように）
+      // 既存のポップアップがあればすべて削除 (重ならないようにする場合)
       const existingPopups = document.querySelectorAll('.maplibregl-popup');
       existingPopups.forEach(popup => popup.remove());
 
-      // ポップアップを生成
-      new maplibregl.Popup()
+      // 新しくポップアップを生成
+      const popup = new maplibregl.Popup({ closeOnClick: false })
         .setLngLat([lng, lat])
         .setHTML(`
-          <div class="custom-popup" style="cursor: pointer;">
+          <div class="custom-popup">
             Lat: ${lat}, Lng: ${lng}<br>(クリックでコピー)
           </div>
         `)
         .addTo(map);
 
-      // ポップアップ内のクリック -> クリップボードにコピー
-      // Popup生成後でもイベントは取れるように、少し遅延させるかMutationObserverなどで対応
+      // クリックでコピー -> フェードアウトして自動で消える
+      // Popup要素がDOMに追加されるまで少し待つ
       setTimeout(() => {
-        const popupContent = document.querySelector('.custom-popup');
+        const popupContent = popup.getElement().querySelector('.custom-popup');
         if (!popupContent) return;
+
         popupContent.addEventListener('click', async () => {
           try {
             await navigator.clipboard.writeText(`${lat}, ${lng}`);
-            alert("クリップボードにコピーしました！");
+            // アラートを出す場合
+            alert('クリップボードにコピーしました！');
+
+            // フェードアウト用クラスを付与
+            popupContent.classList.add('fade-out');
+
+            // フェードアウトし終わった頃にポップアップ削除
+            setTimeout(() => {
+              popup.remove();
+            }, 800); // transition と同じ 0.8s 後に削除
           } catch (err) {
-            alert("コピーに失敗しました: " + err);
+            alert('コピーに失敗しました: ' + err);
           }
         });
       }, 100);
@@ -142,13 +167,12 @@
         const lat = parseFloat(result.lat);
         const lon = parseFloat(result.lon);
 
-        // 地図を移動 (flyToでアニメーションしながら移動も可)
+        // 地図を移動
         map.setCenter([lon, lat]);
         map.setZoom(16);
 
-        // ピンを置きたい場合は Layer / Source を追加するなど
-        // ここでは簡易的にマーカー的に Popup だけ表示
-        new maplibregl.Popup()
+        // ピンの代わりに簡単なポップアップを表示
+        const infoPopup = new maplibregl.Popup({ closeOnClick: true })
           .setLngLat([lon, lat])
           .setHTML(`<div class="custom-popup">${result.display_name}</div>`)
           .addTo(map);
