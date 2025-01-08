@@ -23,26 +23,20 @@
       font-family: sans-serif;
     }
 
-    /* ページ上部の説明文 */
-    #info-container {
-      padding: 10px;
-      background-color: #f8f8f8;
-      border-bottom: 1px solid #ccc;
-      line-height: 1.6;
-    }
-    #info-container a {
-      color: #0066cc;
-      text-decoration: none;
-    }
-    #info-container a:hover {
-      text-decoration: underline;
+    /* detailsタグのデフォルト矢印を少しスタイリング */
+    details summary {
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1.1rem;
+      outline: none;
+      margin-bottom: 5px;
     }
 
-    /* タイトルを大きくして目立たせる */
-    #info-container h1 {
-      margin: 0 0 10px 0;
-      font-size: 1.6rem;
-      font-weight: bold;
+    /* 折りたたみのボーダーなど（好みに応じて） */
+    #info-details {
+      padding: 5px 10px;
+      background-color: #f8f8f8;
+      border-bottom: 1px solid #ccc;
     }
 
     /* 検索ボックス等をまとめるコンテナ */
@@ -51,10 +45,8 @@
       flex-wrap: wrap;
       align-items: center;
       margin: 10px;
-      gap: 10px; /* 要素間の隙間 */
+      gap: 10px;
     }
-
-    /* 各機能ブロック（検索エリア、スタイル選択） */
     .control-group {
       background-color: rgba(255, 255, 255, 0.8);
       border: 1px solid #ccc;
@@ -71,40 +63,36 @@
       font-size: 16px;
       padding: 5px;
     }
-
     #search-button {
       height: 30px;
       font-size: 14px;
       padding: 5px 10px;
       cursor: pointer;
     }
-
     #style-select {
       height: 32px;
       font-size: 14px;
       cursor: pointer;
     }
 
-    /* 地図表示領域 */
+    /* 地図表示領域を大きめに確保 */
     #map {
       width: 100%;
-      height: 80vh;
+      height: 85vh;
     }
 
-    /* カスタムポップアップ */
+    /* ポップアップなどは従来通り */
     .custom-popup {
       background-color: white;
       border: 1px solid black;
       padding: 6px;
       font-size: 14px;
       cursor: pointer;
-      transition: opacity 0.8s ease; /* フェードアウト用 */
+      transition: opacity 0.8s ease;
     }
     .fade-out {
       opacity: 0 !important;
     }
-
-    /* トースト（コピー完了メッセージ）用スタイル */
     .copy-toast {
       position: fixed;
       top: 10%;
@@ -126,15 +114,15 @@
   </style>
 </head>
 <body>
-  <!-- 上部説明文 -->
-  <div id="info-container">
-    <h1>Find LngLat</h1>
+  <!-- 1. detailsタグで折りたたみ -->
+  <details id="info-details" open>
+    <!-- open属性を付けると最初から展開した状態になる(必要に応じて外す) -->
+    <summary>Find LngLat (説明を表示/非表示)</summary>
     <p>
       このページでは任意地点の緯度経度をコピペできます。<br />
       使い方：検索ボックスで検索するか、地図を動かして緯度経度を取得したい地点を
       <strong>右クリック</strong>してください。その後、CSVなどに貼りつけてご利用ください。<br />
-      <!-- ★ 以下の行を変更しました ★ -->
-      利用地図：OpenStreetMap(©OpenStreetMap Contributors), 
+      利用地図：OpenStreetMap(©OpenStreetMap Contributors),
       <a href="https://github.com/armd-02/Playgrounds/tree/main/tiles" target="_blank" rel="noopener">
         osmfj_poi.json(K-Sakanoshita)
       </a><br />
@@ -144,7 +132,7 @@
         <i class="fa-brands fa-x-twitter"></i> @GISPHN
       </a>
     </p>
-  </div>
+  </details>
 
   <!-- 検索ボックス + スタイル切り替え用セレクトボックス -->
   <div id="controls-container">
@@ -178,70 +166,49 @@
   <!-- MapLibre GL JS -->
   <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
   <script>
-    // 初期地図スタイル (OSM Bright) を設定
+    // 初期地図スタイル
     const INITIAL_STYLE = 'https://tile.openstreetmap.jp/styles/osm-bright/style.json';
-    
+
     // 地図の初期化
     const map = new maplibregl.Map({
       container: 'map',
       style: INITIAL_STYLE,
-      center: [135.5022, 34.6937], // 大阪市付近 [経度, 緯度]
+      center: [135.5022, 34.6937],
       zoom: 13
     });
 
-    /**
-     * スタイル切り替え
-     */
+    // スタイル切り替え
     const styleSelect = document.getElementById('style-select');
     styleSelect.addEventListener('change', () => {
       const newStyleUrl = styleSelect.value;
       map.setStyle(newStyleUrl);
     });
 
-    /**
-     * コピー完了を知らせるトースト(ポップアップ)を表示
-     * 一定時間後に自動でフェードアウトします
-     */
+    // コピー完了を知らせるトースト
     function showCopyToast(message) {
-      // すでにトーストがある場合は削除してから作り直す
       const oldToast = document.querySelector('.copy-toast');
-      if (oldToast) {
-        document.body.removeChild(oldToast);
-      }
+      if (oldToast) document.body.removeChild(oldToast);
 
       const toast = document.createElement('div');
       toast.className = 'copy-toast';
       toast.textContent = message;
       document.body.appendChild(toast);
 
-      // フェードイン (visibleクラスを付与)
+      setTimeout(() => toast.classList.add('visible'), 10);
+      setTimeout(() => toast.classList.remove('visible'), 2000);
       setTimeout(() => {
-        toast.classList.add('visible');
-      }, 10);
-
-      // 2秒後にフェードアウト
-      setTimeout(() => {
-        toast.classList.remove('visible');
-      }, 2000);
-
-      // 3秒後にDOMから削除
-      setTimeout(() => {
-        if (toast.parentNode) {
-          toast.parentNode.removeChild(toast);
-        }
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
       }, 3000);
     }
 
-    // 右クリック時の座標取得イベント
+    // 右クリックで座標取得
     map.on('contextmenu', (e) => {
       const lng = e.lngLat.lng.toFixed(6);
       const lat = e.lngLat.lat.toFixed(6);
 
-      // 既存のポップアップがあればすべて削除
       const existingPopups = document.querySelectorAll('.maplibregl-popup');
       existingPopups.forEach(popup => popup.remove());
 
-      // 新しくポップアップを生成
       const popup = new maplibregl.Popup({ closeOnClick: false })
         .setLngLat([lng, lat])
         .setHTML(`
@@ -251,21 +218,15 @@
         `)
         .addTo(map);
 
-      // クリックでコピー -> フェードアウトして自動で消える
       setTimeout(() => {
         const popupContent = popup.getElement().querySelector('.custom-popup');
         if (!popupContent) return;
-
         popupContent.addEventListener('click', async () => {
           try {
             await navigator.clipboard.writeText(`${lat}, ${lng}`);
             showCopyToast('クリップボードにコピーしました！');
-            
-            // ポップアップ本体をフェードアウト
             popupContent.classList.add('fade-out');
-            setTimeout(() => {
-              popup.remove();
-            }, 800);
+            setTimeout(() => popup.remove(), 800);
           } catch (err) {
             alert('コピーに失敗しました: ' + err);
           }
@@ -273,19 +234,14 @@
       }, 100);
     });
 
-    // 検索ボタンを押したとき
+    // 検索機能
     document.getElementById('search-button').addEventListener('click', () => {
       performSearch();
     });
-
-    // Enterキーでも検索
     document.getElementById('search-input').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        performSearch();
-      }
+      if (e.key === 'Enter') performSearch();
     });
 
-    // Nominatim APIを使った検索
     async function performSearch() {
       const query = document.getElementById('search-input').value.trim();
       if (!query) return;
@@ -294,16 +250,13 @@
 
       try {
         const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error('Network response was not OK');
-        }
+        if (!response.ok) throw new Error('Network response was not OK');
         const data = await response.json();
         if (data.length === 0) {
           alert('該当する場所が見つかりませんでした。');
           return;
         }
 
-        // 最初の検索結果を採用
         const result = data[0];
         const lat = parseFloat(result.lat);
         const lon = parseFloat(result.lon);
@@ -311,7 +264,6 @@
         map.setCenter([lon, lat]);
         map.setZoom(16);
 
-        // 検索結果の場所にポップアップを表示
         new maplibregl.Popup({ closeOnClick: true })
           .setLngLat([lon, lat])
           .setHTML(`<div class="custom-popup">${result.display_name}</div>`)
