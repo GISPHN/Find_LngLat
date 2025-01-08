@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>MapLibre Lat/Lng Finder</title>
+  <!-- MapLibreのCSS -->
+  <link
+    href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css"
+    rel="stylesheet"
+  />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      width: 100%;
+      height: 90vh;
+    }
+    #search-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      margin: 10px 0;
+    }
+    #search-input {
+      width: 300px;
+      height: 30px;
+      font-size: 16px;
+      margin-right: 10px;
+      padding: 5px;
+    }
+    #search-button {
+      height: 30px;
+      font-size: 14px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    /* 右クリック時に表示する小さなポップアップ */
+    .custom-popup {
+      background-color: white;
+      border: 1px solid black;
+      padding: 6px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 検索ボックス -->
+  <div id="search-container">
+    <input
+      type="text"
+      id="search-input"
+      placeholder="施設名や住所を入力..."
+    />
+    <button id="search-button">検索</button>
+  </div>
+
+  <!-- 地図表示領域 -->
+  <div id="map"></div>
+
+  <!-- MapLibre GL JS -->
+  <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+  <script>
+    // 地図の初期化
+    const map = new maplibregl.Map({
+      container: 'map',
+      // デモ用のスタイル（OpenMapTiles/OSM）
+      style: 'https://demotiles.maplibre.org/style.json',
+      center: [139.767125, 35.681236], // [経度, 緯度]
+      zoom: 13
+    });
+
+    // 右クリック時の座標取得イベント
+    map.on('contextmenu', (e) => {
+      const lng = e.lngLat.lng.toFixed(6);
+      const lat = e.lngLat.lat.toFixed(6);
+
+      // すでにポップアップがある場合は削除（重ならないように）
+      const existingPopups = document.querySelectorAll('.maplibregl-popup');
+      existingPopups.forEach(popup => popup.remove());
+
+      // ポップアップを生成
+      new maplibregl.Popup()
+        .setLngLat([lng, lat])
+        .setHTML(`
+          <div class="custom-popup" style="cursor: pointer;">
+            Lat: ${lat}, Lng: ${lng}<br>(クリックでコピー)
+          </div>
+        `)
+        .addTo(map);
+
+      // ポップアップ内のクリック -> クリップボードにコピー
+      // Popup生成後でもイベントは取れるように、少し遅延させるかMutationObserverなどで対応
+      setTimeout(() => {
+        const popupContent = document.querySelector('.custom-popup');
+        if (!popupContent) return;
+        popupContent.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(`${lat}, ${lng}`);
+            alert("クリップボードにコピーしました！");
+          } catch (err) {
+            alert("コピーに失敗しました: " + err);
+          }
+        });
+      }, 100);
+    });
+
+    // 検索ボタンを押したとき
+    document.getElementById('search-button').addEventListener('click', () => {
+      performSearch();
+    });
+
+    // Enterキーでも検索
+    document.getElementById('search-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        performSearch();
+      }
+    });
+
+    // Nominatim APIを使った検索
+    async function performSearch() {
+      const query = document.getElementById('search-input').value.trim();
+      if (!query) return;
+
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Network response was not OK');
+        }
+        const data = await response.json();
+        if (data.length === 0) {
+          alert('該当する場所が見つかりませんでした。');
+          return;
+        }
+
+        // 最初の検索結果を採用
+        const result = data[0];
+        const lat = parseFloat(result.lat);
+        const lon = parseFloat(result.lon);
+
+        // 地図を移動 (flyToでアニメーションしながら移動も可)
+        map.setCenter([lon, lat]);
+        map.setZoom(16);
+
+        // ピンを置きたい場合は Layer / Source を追加するなど
+        // ここでは簡易的にマーカー的に Popup だけ表示
+        new maplibregl.Popup()
+          .setLngLat([lon, lat])
+          .setHTML(`<div class="custom-popup">${result.display_name}</div>`)
+          .addTo(map);
+
+      } catch (error) {
+        console.error('Error:', error);
+        alert('検索に失敗しました。');
+      }
+    }
+  </script>
+</body>
+</html>
