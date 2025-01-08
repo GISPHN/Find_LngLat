@@ -2,7 +2,8 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <title>MapLibre Lat/Lng Finder (Osaka)</title>
+  <!-- 1. Webページの名前を「Find LngLat」に変更 -->
+  <title>Find LngLat</title>
   <!-- MapLibre GL CSS -->
   <link
     href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css"
@@ -38,17 +39,23 @@
       text-decoration: underline;
     }
 
+    /* タイトルを大きくするなどして目立たせる */
+    #info-container h1 {
+      margin: 0 0 10px 0; 
+      font-size: 1.6rem;
+      font-weight: bold;
+    }
+
     /* 検索ボックスを説明文の下に配置し、左端寄せ */
     #search-container {
       display: flex;
       flex-direction: row;
       align-items: center;
-      margin: 10px; /* 上下左右に少し余白を取る */
-      background-color: rgba(255, 255, 255, 0.8); 
+      margin: 10px;
+      background-color: rgba(255, 255, 255, 0.8);
       border: 1px solid #ccc;
       border-radius: 4px;
       padding: 6px;
-      /* ここではposition指定を外して通常フローで表示 */
     }
 
     #search-input {
@@ -66,7 +73,7 @@
       cursor: pointer;
     }
 
-    /* 地図を画面の残り領域に表示（85vhなどお好みで） */
+    /* 地図表示 */
     #map {
       width: 100%;
       height: 80vh; 
@@ -107,22 +114,20 @@
   </style>
 </head>
 <body>
-  <!-- ページ上部の説明文 -->
+  <!-- 2. 説明文を指定のとおりに変更し、「Find LngLat」はタイトルとして目立たせる -->
   <div id="info-container">
+    <h1>Find LngLat</h1>
     <p>
       このページでは任意地点の緯度経度をコピペできます。<br />
       使い方：検索ボックスで検索するか、地図を動かして緯度経度を取得したい地点を
       <strong>右クリック</strong>してください。その後、CSVなどに貼りつけてご利用ください。<br />
       利用地図：OpenStreetMapを利用しています　&copy;OpenStreetMap Contributors<br />
       利用API：OpenStreetMap Nominatim APIを利用しています。<br />
-      作成者：
-      <a href="https://x.com/GISPHN" target="_blank" rel="noopener">
-        <i class="fa-brands fa-x-twitter"></i> @GISPHN
-      </a>
+      作成者：@GISPHN
     </p>
   </div>
 
-  <!-- 検索ボックス（説明文の下に配置） -->
+  <!-- 検索ボックス -->
   <div id="search-container">
     <input
       type="text"
