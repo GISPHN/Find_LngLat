@@ -38,19 +38,17 @@
       text-decoration: underline;
     }
 
-    /* 検索ボックスを左端に移動させるためのコンテナ */
+    /* 検索ボックスを説明文の下に配置し、左端寄せ */
     #search-container {
       display: flex;
+      flex-direction: row;
       align-items: center;
-      /* 左端に固定する */
-      position: absolute;
-      top: 100px;       /* 説明文の下部辺りに配置 */
-      left: 10px;       /* 画面左端から10pxの余白 */
-      z-index: 999;     /* 地図より前面に表示 */
-      background-color: rgba(255, 255, 255, 0.8);
+      margin: 10px; /* 上下左右に少し余白を取る */
+      background-color: rgba(255, 255, 255, 0.8); 
       border: 1px solid #ccc;
       border-radius: 4px;
       padding: 6px;
+      /* ここではposition指定を外して通常フローで表示 */
     }
 
     #search-input {
@@ -68,11 +66,13 @@
       cursor: pointer;
     }
 
+    /* 地図を画面の残り領域に表示（85vhなどお好みで） */
     #map {
       width: 100%;
-      height: 85vh; /* 説明文と検索フォームの分だけ少し高さを下げる */
+      height: 80vh; 
     }
 
+    /* カスタムポップアップ */
     .custom-popup {
       background-color: white;
       border: 1px solid black;
@@ -122,7 +122,7 @@
     </p>
   </div>
 
-  <!-- 検索ボックス（左端に配置） -->
+  <!-- 検索ボックス（説明文の下に配置） -->
   <div id="search-container">
     <input
       type="text"
@@ -151,7 +151,7 @@
      * 一定時間後に自動でフェードアウトします
      */
     function showCopyToast(message) {
-      // すでに同様のトーストがある場合は削除してから作り直す
+      // すでにトーストがある場合は削除してから作り直す
       const oldToast = document.querySelector('.copy-toast');
       if (oldToast) {
         document.body.removeChild(oldToast);
@@ -208,9 +208,8 @@
         popupContent.addEventListener('click', async () => {
           try {
             await navigator.clipboard.writeText(`${lat}, ${lng}`);
-            // コピー完了のトーストを表示
             showCopyToast('クリップボードにコピーしました！');
-
+            
             // ポップアップ本体をフェードアウト
             popupContent.classList.add('fade-out');
             setTimeout(() => {
@@ -258,7 +257,6 @@
         const lat = parseFloat(result.lat);
         const lon = parseFloat(result.lon);
 
-        // 地図を移動
         map.setCenter([lon, lat]);
         map.setZoom(16);
 
