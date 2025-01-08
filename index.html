@@ -38,24 +38,26 @@
       text-decoration: underline;
     }
 
-    #map {
-      width: 100%;
-      height: 80vh; /* 少し高さを調整 */
-    }
-
+    /* 検索ボックスを左端に移動させるためのコンテナ */
     #search-container {
       display: flex;
-      flex-direction: row;
-      justify-content: center;
       align-items: center;
-      margin: 10px 0;
+      /* 左端に固定する */
+      position: absolute;
+      top: 100px;       /* 説明文の下部辺りに配置 */
+      left: 10px;       /* 画面左端から10pxの余白 */
+      z-index: 999;     /* 地図より前面に表示 */
+      background-color: rgba(255, 255, 255, 0.8);
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 6px;
     }
 
     #search-input {
-      width: 300px;
+      width: 200px;
       height: 30px;
       font-size: 16px;
-      margin-right: 10px;
+      margin-right: 5px;
       padding: 5px;
     }
 
@@ -66,6 +68,11 @@
       cursor: pointer;
     }
 
+    #map {
+      width: 100%;
+      height: 85vh; /* 説明文と検索フォームの分だけ少し高さを下げる */
+    }
+
     .custom-popup {
       background-color: white;
       border: 1px solid black;
@@ -74,7 +81,6 @@
       cursor: pointer;
       transition: opacity 0.8s ease; /* フェードアウト用 */
     }
-
     .fade-out {
       opacity: 0 !important;
     }
@@ -108,16 +114,15 @@
       使い方：検索ボックスで検索するか、地図を動かして緯度経度を取得したい地点を
       <strong>右クリック</strong>してください。その後、CSVなどに貼りつけてご利用ください。<br />
       利用地図：OpenStreetMapを利用しています　&copy;OpenStreetMap Contributors<br />
-      利用API：Open Street Map Nominatim APIを利用しています。<br />
+      利用API：OpenStreetMap Nominatim APIを利用しています。<br />
       作成者：
       <a href="https://x.com/GISPHN" target="_blank" rel="noopener">
-        <!-- Xアイコン + ユーザー名 -->
         <i class="fa-brands fa-x-twitter"></i> @GISPHN
       </a>
     </p>
   </div>
 
-  <!-- 検索ボックス -->
+  <!-- 検索ボックス（左端に配置） -->
   <div id="search-container">
     <input
       type="text"
@@ -136,7 +141,6 @@
     // 地図の初期化
     const map = new maplibregl.Map({
       container: 'map',
-      // 例: tile.openstreetmap.jpのベクトルタイルスタイルを利用
       style: 'https://tile.openstreetmap.jp/styles/osm-bright/style.json',
       center: [135.5022, 34.6937], // 大阪市付近 [経度, 緯度]
       zoom: 13
@@ -182,7 +186,7 @@
       const lng = e.lngLat.lng.toFixed(6);
       const lat = e.lngLat.lat.toFixed(6);
 
-      // 既存のポップアップがあればすべて削除 (重ならないように)
+      // 既存のポップアップがあればすべて削除
       const existingPopups = document.querySelectorAll('.maplibregl-popup');
       existingPopups.forEach(popup => popup.remove());
 
@@ -204,16 +208,15 @@
         popupContent.addEventListener('click', async () => {
           try {
             await navigator.clipboard.writeText(`${lat}, ${lng}`);
-            // コピー完了のトーストを表示 (OKボタンなし・自動消去)
+            // コピー完了のトーストを表示
             showCopyToast('クリップボードにコピーしました！');
 
             // ポップアップ本体をフェードアウト
             popupContent.classList.add('fade-out');
             setTimeout(() => {
               popup.remove();
-            }, 800); 
+            }, 800);
           } catch (err) {
-            // 失敗時だけアラート表示するなど
             alert('コピーに失敗しました: ' + err);
           }
         });
@@ -259,7 +262,7 @@
         map.setCenter([lon, lat]);
         map.setZoom(16);
 
-        // ピンの代わりに簡単なポップアップを表示
+        // 簡易的にポップアップを表示
         new maplibregl.Popup({ closeOnClick: true })
           .setLngLat([lon, lat])
           .setHTML(`<div class="custom-popup">${result.display_name}</div>`)
