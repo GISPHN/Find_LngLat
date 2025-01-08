@@ -2,7 +2,6 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <!-- Webページの名前を「Find LngLat」に変更 -->
   <title>Find LngLat</title>
   <!-- MapLibre GL CSS -->
   <link
@@ -46,23 +45,30 @@
       font-weight: bold;
     }
 
-    /* 検索ボックスを説明文の下に配置し、左端寄せ */
-    #search-container {
+    /* 検索ボックス等をまとめるコンテナ */
+    #controls-container {
       display: flex;
-      flex-direction: row;
+      flex-wrap: wrap;
       align-items: center;
       margin: 10px;
+      gap: 10px; /* 要素間の隙間 */
+    }
+
+    /* 個々のコンテナで区切り（検索エリア、スタイル選択） */
+    .control-group {
       background-color: rgba(255, 255, 255, 0.8);
       border: 1px solid #ccc;
       border-radius: 4px;
       padding: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
     #search-input {
       width: 200px;
       height: 30px;
       font-size: 16px;
-      margin-right: 5px;
       padding: 5px;
     }
 
@@ -70,6 +76,12 @@
       height: 30px;
       font-size: 14px;
       padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    #style-select {
+      height: 32px;
+      font-size: 14px;
       cursor: pointer;
     }
 
@@ -130,14 +142,30 @@
     </p>
   </div>
 
-  <!-- 検索ボックス -->
-  <div id="search-container">
-    <input
-      type="text"
-      id="search-input"
-      placeholder="施設名や住所を入力..."
-    />
-    <button id="search-button">検索</button>
+  <!-- 検索ボックスとスタイル選択をまとめるコンテナ -->
+  <div id="controls-container">
+    <!-- 検索ボックス -->
+    <div class="control-group">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="施設名や住所を入力..."
+      />
+      <button id="search-button">検索</button>
+    </div>
+
+    <!-- スタイル切り替え用セレクトボックス -->
+    <div class="control-group">
+      <label for="style-select">地図スタイル：</label>
+      <select id="style-select">
+        <option value="https://tile.openstreetmap.jp/styles/osm-bright/style.json">
+          OSM Bright
+        </option>
+        <option value="https://raw.githubusercontent.com/armd-02/Playgrounds/main/tiles/osmfj_poi.json">
+          OSMFJ POI
+        </option>
+      </select>
+    </div>
   </div>
 
   <!-- 地図表示領域 -->
@@ -146,12 +174,24 @@
   <!-- MapLibre GL JS -->
   <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
   <script>
+    // 初期地図スタイル (OSM Bright) を設定
+    const INITIAL_STYLE = 'https://tile.openstreetmap.jp/styles/osm-bright/style.json';
+    
     // 地図の初期化
     const map = new maplibregl.Map({
       container: 'map',
-      style: 'https://tile.openstreetmap.jp/styles/osm-bright/style.json',
+      style: INITIAL_STYLE,
       center: [135.5022, 34.6937], // 大阪市付近 [経度, 緯度]
       zoom: 13
+    });
+
+    /**
+     * スタイル切り替え
+     */
+    const styleSelect = document.getElementById('style-select');
+    styleSelect.addEventListener('change', () => {
+      const newStyleUrl = styleSelect.value;
+      map.setStyle(newStyleUrl);
     });
 
     /**
