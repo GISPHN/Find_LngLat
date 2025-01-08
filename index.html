@@ -52,9 +52,28 @@
       transition: opacity 0.8s ease; /* フェードアウト用 */
     }
 
-    /* フェードアウト用クラス */
     .fade-out {
       opacity: 0 !important;
+    }
+
+    /* トースト（コピー完了メッセージ）用スタイル */
+    .copy-toast {
+      position: fixed;
+      top: 10%;
+      left: 50%;
+      transform: translate(-50%, -10%);
+      background-color: rgba(0, 0, 0, 0.7);
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+      z-index: 9999;
+    }
+    .copy-toast.visible {
+      opacity: 1;
+      transform: translate(-50%, 0);
     }
   </style>
 </head>
@@ -78,21 +97,53 @@
     // 地図の初期化
     const map = new maplibregl.Map({
       container: 'map',
-      /*
-        例として tile.openstreetmap.jp 提供のベクトルタイルスタイルを使用
-        ※ 他のベクトルタイルスタイルを使う場合は style の値を差し替えてください
-      */
+      // 例: tile.openstreetmap.jpのベクトルタイルスタイルを利用
       style: 'https://tile.openstreetmap.jp/styles/osm-bright/style.json',
       center: [135.5022, 34.6937], // 大阪市付近 [経度, 緯度]
       zoom: 13
     });
+
+    /**
+     * コピー完了を知らせるトースト(ポップアップ)を表示
+     * 一定時間後に自動でフェードアウトします
+     */
+    function showCopyToast(message) {
+      // すでに同様のトーストがある場合は削除してから作り直す
+      const oldToast = document.querySelector('.copy-toast');
+      if (oldToast) {
+        document.body.removeChild(oldToast);
+      }
+
+      // 新しいトースト要素を作成
+      const toast = document.createElement('div');
+      toast.className = 'copy-toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      // フェードイン (visibleクラスを付与)
+      setTimeout(() => {
+        toast.classList.add('visible');
+      }, 10);
+
+      // 2秒後にフェードアウト
+      setTimeout(() => {
+        toast.classList.remove('visible');
+      }, 2000);
+
+      // 3秒後にDOMから削除
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 3000);
+    }
 
     // 右クリック時の座標取得イベント
     map.on('contextmenu', (e) => {
       const lng = e.lngLat.lng.toFixed(6);
       const lat = e.lngLat.lat.toFixed(6);
 
-      // 既存のポップアップがあればすべて削除 (重ならないようにする場合)
+      // 既存のポップアップがあればすべて削除 (重ならないように)
       const existingPopups = document.querySelectorAll('.maplibregl-popup');
       existingPopups.forEach(popup => popup.remove());
 
@@ -115,17 +166,16 @@
         popupContent.addEventListener('click', async () => {
           try {
             await navigator.clipboard.writeText(`${lat}, ${lng}`);
-            // アラートを出す場合
-            alert('クリップボードにコピーしました！');
+            // コピー完了のトーストを表示 (OKボタンなし・自動消去)
+            showCopyToast('クリップボードにコピーしました！');
 
-            // フェードアウト用クラスを付与
+            // ポップアップ本体をフェードアウト
             popupContent.classList.add('fade-out');
-
-            // フェードアウトし終わった頃にポップアップ削除
             setTimeout(() => {
               popup.remove();
-            }, 800); // transition と同じ 0.8s 後に削除
+            }, 800); 
           } catch (err) {
+            // 失敗時だけアラート表示するなど
             alert('コピーに失敗しました: ' + err);
           }
         });
@@ -172,7 +222,7 @@
         map.setZoom(16);
 
         // ピンの代わりに簡単なポップアップを表示
-        const infoPopup = new maplibregl.Popup({ closeOnClick: true })
+        new maplibregl.Popup({ closeOnClick: true })
           .setLngLat([lon, lat])
           .setHTML(`<div class="custom-popup">${result.display_name}</div>`)
           .addTo(map);
