@@ -2,13 +2,13 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <title>Find LngLat + Field Survey</title>
+  <title>Find LngLat + 地区踏査モード</title>
   <!-- MapLibre GL CSS -->
   <link
     href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css"
     rel="stylesheet"
   />
-  <!-- Font Awesome（Xアイコン用） -->
+  <!-- Font Awesome（弓矢アイコン用） -->
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
@@ -21,9 +21,10 @@
       margin: 0;
       padding: 0;
       font-family: sans-serif;
+      position: relative; /* 親要素として相対位置 */
     }
 
-    /* 折りたたみ用 detailsタグ */
+    /* 折りたたみ説明エリア */
     details summary {
       cursor: pointer;
       font-weight: bold;
@@ -37,7 +38,7 @@
       border-bottom: 1px solid #ccc;
     }
 
-    /* コントロール類をまとめるコンテナ */
+    /* コントロールエリア */
     #controls-container {
       display: flex;
       flex-wrap: wrap;
@@ -62,11 +63,7 @@
       padding: 5px;
     }
     #search-button,
-    #get-location-button,
-    #tansa-mode-button,
-    #start-button,
-    #register-button,
-    #stop-button {
+    #tansa-mode-button {
       height: 30px;
       font-size: 14px;
       padding: 5px 10px;
@@ -78,16 +75,51 @@
       cursor: pointer;
     }
 
+    /* 地区踏査モードの拡張ボタン群：初期は非表示 */
+    #tansa-controls {
+      display: none;
+      gap: 20px; /* ボタン間隔を広くする */
+    }
+    /* ボタンをさらに大きく間隔を広くする */
+    #start-button,
+    #register-button,
+    #stop-button {
+      height: 36px;
+      font-size: 16px;
+      padding: 6px 16px;
+      margin-right: 15px; /* ボタン間隔（押し間違い防止） */
+      cursor: pointer;
+    }
+
     /* 地図表示領域 */
     #map {
       width: 100%;
-      height: 70vh; /* 地図の高さをやや下げて、上部のUIスペース確保 */
+      height: 65vh; /* 上部UIにスペースを割く */
+      position: relative;
     }
 
-    /* 「地区踏査モード」の拡張ボタン群を初期は非表示 */
-    #tansa-controls {
-      display: none;
-      gap: 5px;
+    /* 現在地ボタンを左下に固定配置 */
+    #get-location-button {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 999;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      color: #333;
+      transition: background-color 0.3s;
+    }
+    #get-location-button.active {
+      background-color: #87CEFA; /* アクティブ時：薄い水色 */
+      color: #fff;
     }
 
     /* カスタムポップアップ */
@@ -96,14 +128,14 @@
       border: 1px solid black;
       padding: 6px;
       font-size: 14px;
-      cursor: pointer; 
-      transition: opacity 0.8s ease; /* フェードアウト用 */
+      cursor: pointer;
+      transition: opacity 0.8s ease; 
     }
     .fade-out {
       opacity: 0 !important;
     }
 
-    /* トースト（コピー完了メッセージ）用スタイル */
+    /* トースト（コピー完了メッセージ） */
     .copy-toast {
       position: fixed;
       top: 10%;
@@ -122,21 +154,53 @@
       opacity: 1;
       transform: translate(-50%, 0);
     }
+
+    /* 終了後の出力用カスタムモーダル(簡易実装) */
+    #export-modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+    }
+    #export-modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 300px;
+      text-align: center;
+    }
+    #export-modal-buttons {
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-between;
+    }
+    #export-modal-buttons button {
+      margin: 0 5px;
+      height: 36px;
+      font-size: 14px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <!-- 説明文をdetailsタグで折りたたみ可能に -->
+  <!-- 折りたたみの説明文 -->
   <details id="info-details" open>
-    <summary>Find LngLat (クリックで説明表示/非表示)</summary>
+    <summary>Find LngLat (説明を表示/非表示)</summary>
     <p>
       このページでは任意地点の緯度経度をコピペできます。<br />
-      使い方：検索ボックスで検索するか、地図を動かして
-      <strong>クリック</strong>すると、座標をコピーできます。<br />
+      使い方：地図を動かして<strong>クリック</strong>または
+      <strong>長押し（スマホ）/右クリック（PC）</strong>するとコメント登録や座標コピーが可能です。<br />
+      地図スタイルは自由に切り替えられます。<br />
+      また「地区踏査モード」で移動軌跡を記録し、コメントも入力できます。<br />
       利用地図：OpenStreetMap(©OpenStreetMap Contributors),
       <a href="https://github.com/armd-02/Playgrounds/tree/main/tiles" target="_blank" rel="noopener">
         osmfj_poi.json(K-Sakanoshita)
       </a><br />
-      利用API：OpenStreetMap Nominatim APIを利用しています。<br />
+      利用API：OpenStreetMap Nominatim API<br />
       作成者：
       <a href="https://x.com/GISPHN" target="_blank" rel="noopener">
         <i class="fa-brands fa-x-twitter"></i> @GISPHN
@@ -144,19 +208,15 @@
     </p>
   </details>
 
-  <!-- ユーザー操作系をまとめる -->
+  <!-- メインの操作系 -->
   <div id="controls-container">
-    <!-- 検索ボックス -->
+    <!-- 検索 -->
     <div class="control-group">
-      <input
-        type="text"
-        id="search-input"
-        placeholder="施設名や住所を入力..."
-      />
+      <input type="text" id="search-input" placeholder="施設名や住所を入力..." />
       <button id="search-button">検索</button>
     </div>
 
-    <!-- 地図スタイル切り替え -->
+    <!-- スタイル切り替え -->
     <div class="control-group">
       <label for="style-select">地図スタイル：</label>
       <select id="style-select">
@@ -169,17 +229,12 @@
       </select>
     </div>
 
-    <!-- 現在地を取得するボタン -->
-    <div class="control-group">
-      <button id="get-location-button">現在地</button>
-    </div>
-
-    <!-- 地区踏査モードのオンオフボタン -->
+    <!-- 地区踏査モード表示 -->
     <div class="control-group">
       <button id="tansa-mode-button">地区踏査モード</button>
     </div>
 
-    <!-- 地区踏査モードの拡張ボタン群（非表示→表示に切り替え） -->
+    <!-- 地区踏査モード拡張ボタン群（非表示→表示） -->
     <div class="control-group" id="tansa-controls">
       <button id="start-button">スタート</button>
       <button id="register-button">登録</button>
@@ -187,74 +242,49 @@
     </div>
   </div>
 
-  <!-- 地図表示領域 -->
-  <div id="map"></div>
+  <!-- 地図領域 -->
+  <div id="map">
+    <!-- 地図の左下に現在地ボタンを絶対配置 -->
+    <button id="get-location-button" title="現在地">
+      <i class="fas fa-location-arrow"></i>
+    </button>
+  </div>
+
+  <!-- 出力用のカスタムモーダル（GPX/KMLまとめて案内） -->
+  <div id="export-modal">
+    <div id="export-modal-content">
+      <p>記録終了しました。下記ボタンでファイルをダウンロードしてください。</p>
+      <div id="export-modal-buttons">
+        <button id="download-gpx">GPX</button>
+        <button id="download-kml">KML</button>
+        <button id="export-close">閉じる</button>
+      </div>
+    </div>
+  </div>
 
   <!-- MapLibre GL JS -->
   <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
   <script>
-    /* --------------------------------------------------------------------
-       1) 地図初期化、基本機能
-    -------------------------------------------------------------------- */
+    /* ------------------------------------------------------------
+       1) 地図初期化
+    ------------------------------------------------------------ */
     const INITIAL_STYLE = 'https://tile.openstreetmap.jp/styles/osm-bright/style.json';
     const map = new maplibregl.Map({
       container: 'map',
       style: INITIAL_STYLE,
-      center: [135.5022, 34.6937], // 大阪市近辺
+      center: [135.5022, 34.6937],
       zoom: 13
     });
 
     // スタイル切り替え
-    const styleSelect = document.getElementById('style-select');
-    styleSelect.addEventListener('change', () => {
-      const newStyleUrl = styleSelect.value;
-      map.setStyle(newStyleUrl);
+    document.getElementById('style-select').addEventListener('change', (e) => {
+      map.setStyle(e.target.value);
     });
 
-    /* -----------------------------------------
-       クリックで座標を取得 → ポップアップ
-    ----------------------------------------- */
-    map.on('click', (e) => {
-      const lng = e.lngLat.lng.toFixed(6);
-      const lat = e.lngLat.lat.toFixed(6);
-
-      // 既存のポップアップを削除
-      document.querySelectorAll('.maplibregl-popup').forEach(p => p.remove());
-
-      // ポップアップ生成
-      const popup = new maplibregl.Popup({ closeOnClick: false })
-        .setLngLat([lng, lat])
-        .setHTML(`
-          <div class="custom-popup">
-            Lat: ${lat}, Lng: ${lng}<br>(クリックでコピー)
-          </div>
-        `)
-        .addTo(map);
-
-      // ポップアップ上を再度クリック (タップ) → クリップボードコピー
-      setTimeout(() => {
-        const popupContent = popup.getElement().querySelector('.custom-popup');
-        if (!popupContent) return;
-        popupContent.addEventListener('click', async () => {
-          try {
-            await navigator.clipboard.writeText(`${lat}, ${lng}`);
-            showCopyToast('クリップボードにコピーしました！');
-            popupContent.classList.add('fade-out');
-            setTimeout(() => popup.remove(), 800);
-          } catch (err) {
-            alert('コピーに失敗しました: ' + err);
-          }
-        });
-      }, 100);
-    });
-
-
-    /* -----------------------------------------
-       検索機能 (Nominatim API)
-    ----------------------------------------- */
-    document.getElementById('search-button').addEventListener('click', () => {
-      performSearch();
-    });
+    /* ------------------------------------------------------------
+       2) 検索機能 (Nominatim)
+    ------------------------------------------------------------ */
+    document.getElementById('search-button').addEventListener('click', () => performSearch());
     document.getElementById('search-input').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') performSearch();
     });
@@ -286,65 +316,149 @@
           .addTo(map);
 
       } catch (error) {
-        console.error('Error:', error);
+        console.error(error);
         alert('検索に失敗しました。');
       }
     }
 
+    /* ------------------------------------------------------------
+       3) クリックで座標コピー
+    ------------------------------------------------------------ */
+    map.on('click', (e) => {
+      const lng = e.lngLat.lng.toFixed(6);
+      const lat = e.lngLat.lat.toFixed(6);
 
-    /* --------------------------------------------------------------------
-       2) 現在地を取得して地図上に表示
-    -------------------------------------------------------------------- */
-    document.getElementById('get-location-button').addEventListener('click', async () => {
+      // 既存のポップアップを消す
+      document.querySelectorAll('.maplibregl-popup').forEach(p => p.remove());
+
+      // ポップアップ生成
+      const popup = new maplibregl.Popup({ closeOnClick: false })
+        .setLngLat([lng, lat])
+        .setHTML(`
+          <div class="custom-popup">
+            Lat: ${lat}, Lng: ${lng}<br>(クリックでコピー)
+          </div>
+        `)
+        .addTo(map);
+
+      setTimeout(() => {
+        const content = popup.getElement().querySelector('.custom-popup');
+        if (!content) return;
+        content.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(`${lat}, ${lng}`);
+            showCopyToast("クリップボードにコピーしました！");
+            content.classList.add('fade-out');
+            setTimeout(() => popup.remove(), 800);
+          } catch (err) {
+            alert("コピーに失敗: " + err);
+          }
+        });
+      }, 100);
+    });
+
+    /* ------------------------------------------------------------
+       4) 長押し(contextmenu)で任意地点にコメント2種登録
+    ------------------------------------------------------------ */
+    let pinnedPoints = []; // { lat, lng, timeJST, comment1, comment2 }
+
+    map.on('contextmenu', async (e) => {
+      // PC→右クリック, スマホ→長押し(多くの環境でcontextmenuが発火)
+      const lng = e.lngLat.lng.toFixed(6);
+      const lat = e.lngLat.lat.toFixed(6);
+      
+      const comment1 = prompt("コメント1を入力してください") || "";
+      const comment2 = prompt("コメント2を入力してください") || "";
+      if (!comment1 && !comment2) {
+        return; // いずれも未入力なら登録しない
+      }
+
+      const jstTime = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+
+      pinnedPoints.push({
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+        timeJST: jstTime,
+        comment1,
+        comment2
+      });
+
+      // 地図にマーカー表示
+      new maplibregl.Marker({ color: "red" })
+        .setLngLat([lng, lat])
+        .setPopup(new maplibregl.Popup().setHTML(
+          `Comment1: ${comment1}<br>Comment2: ${comment2}`
+        ))
+        .addTo(map);
+
+      alert("コメントを登録しました。");
+    });
+
+    /* ------------------------------------------------------------
+       5) 現在地ボタン(左下アイコン)
+    ------------------------------------------------------------ */
+    const getLocBtn = document.getElementById('get-location-button');
+    let currentLocationMarker = null;
+
+    getLocBtn.addEventListener('click', () => {
       if (!navigator.geolocation) {
-        alert("このブラウザでは位置情報が取得できません。");
+        alert("ブラウザが位置情報に対応していません。");
         return;
       }
+      getLocBtn.classList.add("active"); // アクティブ色に変更
+
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          getLocBtn.classList.remove("active"); // タップ完了後、戻す
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
           map.setCenter([lng, lat]);
           map.setZoom(16);
 
-          // 既存の現在地マーカーがある場合は削除 (一例)
-          if (window._currentLocationMarker) {
-            window._currentLocationMarker.remove();
+          // すでにマーカーがあれば消す
+          if (currentLocationMarker) {
+            currentLocationMarker.remove();
           }
-          // 新しいマーカーを置く
-          window._currentLocationMarker = new maplibregl.Marker({ color: "blue" })
+          // 青色マーカーで表示
+          currentLocationMarker = new maplibregl.Marker({ color: "blue" })
             .setLngLat([lng, lat])
             .addTo(map);
         },
         (err) => {
+          getLocBtn.classList.remove("active");
           alert("現在地の取得に失敗: " + err.message);
         },
         { enableHighAccuracy: true }
       );
     });
 
-
-    /* --------------------------------------------------------------------
-       3) 地区踏査モードの各種機能
-    -------------------------------------------------------------------- */
-
-    // 「地区踏査モード」ボタンを押すと、スタート・登録・終了のボタンを表示切り替え
+    /* ------------------------------------------------------------
+       6) 地区踏査モード
+    ------------------------------------------------------------ */
+    const tansaModeBtn = document.getElementById('tansa-mode-button');
     const tansaControls = document.getElementById('tansa-controls');
-    document.getElementById('tansa-mode-button').addEventListener('click', () => {
-      if (tansaControls.style.display === 'none') {
-        tansaControls.style.display = 'flex'; // 表示
-      } else {
-        tansaControls.style.display = 'none'; // 非表示
-      }
-    });
+    const startBtn = document.getElementById('start-button');
+    const registerBtn = document.getElementById('register-button');
+    const stopBtn = document.getElementById('stop-button');
 
     let watchId = null;
-    let pathCoordinates = []; // {lat, lng, time, comment?}を格納
+    let pathCoordinates = []; // { lat, lng, timeJST, comment1, comment2(optional) }
 
-    // スタートボタン → 位置情報を監視し、軌跡を保存
-    document.getElementById('start-button').addEventListener('click', () => {
+    // 「地区踏査モード」ボタンを押すと、スタート/登録/終了を表示＆ボタン自体は非表示
+    tansaModeBtn.addEventListener('click', () => {
+      tansaControls.style.display = 'flex';  // 表示
+      tansaModeBtn.style.display = 'none';   // 自分は消える
+    });
+
+    // スタート：GPS追跡
+    startBtn.addEventListener('click', () => {
+      const readOk = confirm(`地区踏査中の歩きスマホは禁止です。
+コメントを入力する際は安全な場所で立ち止まって入力してください。
+OKを押すと開始します。`);
+      if (!readOk) return; // ユーザーがOKしなかったら中断
+
       if (!navigator.geolocation) {
-        alert("このブラウザでは位置情報を取得できません。");
+        alert("ブラウザが位置情報に対応していません。");
         return;
       }
       pathCoordinates = [];
@@ -352,9 +466,9 @@
         (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
-          const time = Date.now();
-          pathCoordinates.push({ lat, lng, time });
-          // TODO: 地図上にLineLayerなどで軌跡を描画したければ追加実装
+          const jstTime = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+          pathCoordinates.push({ lat, lng, timeJST: jstTime });
+          // ※ 必要ならここでマップ上にラインを引く等の拡張が可能
         },
         (err) => {
           console.error(err);
@@ -362,146 +476,183 @@
         },
         { enableHighAccuracy: true }
       );
-      alert("踏査の記録をスタートします。");
+      alert("地区踏査の記録を開始しました。");
     });
 
-    // 登録ボタン → コメント付きピンを立てる
-    document.getElementById('register-button').addEventListener('click', () => {
-      if (pathCoordinates.length === 0) {
-        alert("まだ位置情報が取得されていません。スタートボタンを押してください。");
+    // 登録：現在位置にコメント2つ登録
+    registerBtn.addEventListener('click', () => {
+      if (!watchId || pathCoordinates.length === 0) {
+        alert("まだ地区踏査がスタートしていません。");
         return;
       }
-      // 現在の最新位置
       const lastPos = pathCoordinates[pathCoordinates.length - 1];
       if (!lastPos) return;
 
-      const userComment = prompt("コメントを入力してください");
-      if (!userComment) return;
+      const comment1 = prompt("コメント1を入力してください") || "";
+      const comment2 = prompt("コメント2を入力してください") || "";
 
-      lastPos.comment = userComment;
+      if (!comment1 && !comment2) return; // 何も入力しないならスキップ
 
-      // 地図上にピンを立てる
+      lastPos.comment1 = comment1;
+      lastPos.comment2 = comment2;
+
+      // マーカーを立てる
       new maplibregl.Marker({ color: "red" })
         .setLngLat([lastPos.lng, lastPos.lat])
-        .setPopup(new maplibregl.Popup().setHTML(userComment))
+        .setPopup(new maplibregl.Popup().setHTML(
+          `Comment1: ${comment1}<br>Comment2: ${comment2}`
+        ))
         .addTo(map);
 
-      alert("コメント付きピンを登録しました。");
+      alert("コメント付きで現在位置を登録しました。");
     });
 
-    // 終了ボタン → 記録停止 & ファイル出力
-    document.getElementById('stop-button').addEventListener('click', () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-        watchId = null;
+    // 終了：watch停止 & ファイル出力 → モーダル表示
+    stopBtn.addEventListener('click', () => {
+      if (!watchId) {
+        alert("まだ記録がスタートしていません。");
+        return;
       }
-      if (pathCoordinates.length === 0) {
-        alert("軌跡がありません。");
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+
+      // モードUIをリセット
+      tansaControls.style.display = 'none';
+      tansaModeBtn.style.display = 'block';  // 「地区踏査モード」ボタンを再び表示
+
+      if (pathCoordinates.length === 0 && pinnedPoints.length === 0) {
+        alert("記録されたデータがありません。");
         return;
       }
 
-      // GPX/KMLを作成し、ユーザーにダウンロードしてもらう
-      const gpxData = generateGPX(pathCoordinates);
-      const kmlData = generateKML(pathCoordinates);
-
-      // ダウンロード or 保存先を選ばせる (簡易実装)
-      // とりあえず2つのファイルを連続でダウンロードする例
-      if (confirm("踏査が終了しました。GPXをダウンロードしますか？")) {
-        downloadFile(gpxData, "track.gpx", "application/gpx+xml");
-      }
-      if (confirm("KMLをダウンロードしますか？")) {
-        downloadFile(kmlData, "track.kml", "application/vnd.google-earth.kml+xml");
-      }
-
-      alert("記録を終了しました。");
-      pathCoordinates = [];
+      // モーダルを表示してGPX/KMLダウンロード案内
+      document.getElementById('export-modal').style.display = 'flex';
     });
 
 
-    /* --------------------------------------------------------------------
-       4) GPX / KML 生成 & ダウンロード
-    -------------------------------------------------------------------- */
-    function generateGPX(coords) {
-      // coords: Array<{lat, lng, time, comment?}>
+    /* ------------------------------------------------------------
+       7) GPX/KML 生成 ＋ ダウンロード
+    ------------------------------------------------------------ */
+    const downloadGpxBtn = document.getElementById('download-gpx');
+    const downloadKmlBtn = document.getElementById('download-kml');
+    const exportCloseBtn = document.getElementById('export-close');
+    const exportModal = document.getElementById('export-modal');
+
+    downloadGpxBtn.addEventListener('click', () => {
+      const gpxData = generateGPX();
+      downloadFile(gpxData, "track.gpx", "application/gpx+xml");
+    });
+    downloadKmlBtn.addEventListener('click', () => {
+      const kmlData = generateKML();
+      downloadFile(kmlData, "track.kml", "application/vnd.google-earth.kml+xml");
+    });
+    exportCloseBtn.addEventListener('click', () => {
+      exportModal.style.display = 'none';
+      // 終了後、データ初期化（必要に応じて）
+      pathCoordinates = [];
+      pinnedPoints = [];
+    });
+
+    function generateGPX() {
+      // pathCoordinates + pinnedPoints をGPXに
+      // ※ pathCoordinatesは<trkpt>、pinnedPointsは<wpt>扱いで出力
       let gpx = `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="FindLngLat" xmlns="http://www.topografix.com/GPX/1/1">
-  <trk><trkseg>
+<gpx version="1.1" creator="FindLngLat+FieldSurvey" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>地区踏査トラック</name>
+    <trkseg>
 `;
-      coords.forEach(c => {
-        gpx += `    <trkpt lat="${c.lat}" lon="${c.lng}">
-      <time>${new Date(c.time).toISOString()}</time>
-      <desc>${c.comment || ''}</desc>
-    </trkpt>\n`;
+      // トラックポイント
+      pathCoordinates.forEach(pt => {
+        gpx += `      <trkpt lat="${pt.lat}" lon="${pt.lng}">
+        <time>${pt.timeJST} JST</time>
+        <desc>Comment1: ${pt.comment1 || ''}, Comment2: ${pt.comment2 || ''}</desc>
+      </trkpt>\n`;
       });
-      gpx += `  </trkseg></trk>
-</gpx>`;
+      gpx += `    </trkseg>
+  </trk>
+`;
+      // ピンポイント
+      pinnedPoints.forEach(pp => {
+        gpx += `  <wpt lat="${pp.lat}" lon="${pp.lng}">
+    <time>${pp.timeJST} JST</time>
+    <name>${pp.comment1 || ''}</name>
+    <desc>${pp.comment2 || ''}</desc>
+  </wpt>
+`;
+      });
+
+      gpx += `</gpx>`;
       return gpx;
     }
 
-    function generateKML(coords) {
-      // KMLも同様にXMLを組み立て
-      // coords: Array<{lat, lng, time, comment?}>
+    function generateKML() {
+      // pathCoordinatesをLineStringに、pinnedPointsをPlacemarkに
       let kml = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
 <Document>
-  <name>Track</name>
+  <name>地区踏査データ</name>
   <Placemark>
-    <name>軌跡</name>
+    <name>トラック</name>
     <Style>
       <LineStyle><color>ff0000ff</color><width>4</width></LineStyle>
     </Style>
     <LineString>
       <coordinates>
 `;
-      coords.forEach(c => {
-        kml += `        ${c.lng},${c.lat},0\n`;
+      pathCoordinates.forEach(pt => {
+        kml += `        ${pt.lng},${pt.lat},0\n`;
       });
       kml += `      </coordinates>
     </LineString>
   </Placemark>
 `;
-      // 各コメント付きポイントを Placemark としても出力
-      coords.forEach(c => {
-        if (c.comment) {
-          kml += `  <Placemark>
-    <name>${c.comment}</name>
-    <description>${new Date(c.time).toISOString()}</description>
+      // 各ピン（Placemark）
+      pinnedPoints.forEach(pp => {
+        kml += `  <Placemark>
+    <name>Comment1: ${pp.comment1 || ''}</name>
+    <description><![CDATA[
+      時刻: ${pp.timeJST} JST<br/>
+      Comment2: ${pp.comment2 || ''}<br/>
+      (lat: ${pp.lat}, lng: ${pp.lng})
+    ]]></description>
     <Point>
-      <coordinates>${c.lng},${c.lat},0</coordinates>
+      <coordinates>${pp.lng},${pp.lat},0</coordinates>
     </Point>
   </Placemark>
 `;
-        }
       });
+
+      // pathCoordinatesの各ポイントにコメントが入っているケースもPlacemarkにしたい場合
+      // （省略可）: ここではLineStringだけにしておき、トラックポイントのコメントは表示しない
 
       kml += `</Document>
 </kml>`;
       return kml;
     }
 
-    function downloadFile(fileContent, fileName, mimeType) {
-      const blob = new Blob([fileContent], { type: mimeType });
+    function downloadFile(content, fileName, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
-      link.download = fileName; 
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     }
 
-
-    /* --------------------------------------------------------------------
-       5) トースト表示 (座標コピー完了など)
-    -------------------------------------------------------------------- */
-    function showCopyToast(message) {
+    /* ------------------------------------------------------------
+       8) トースト表示(座標コピー完了等)
+    ------------------------------------------------------------ */
+    function showCopyToast(msg) {
       const oldToast = document.querySelector('.copy-toast');
       if (oldToast) document.body.removeChild(oldToast);
 
       const toast = document.createElement('div');
       toast.className = 'copy-toast';
-      toast.textContent = message;
+      toast.textContent = msg;
       document.body.appendChild(toast);
 
       setTimeout(() => toast.classList.add('visible'), 10);
