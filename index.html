@@ -3,15 +3,6 @@
 <head>
   <meta charset="utf-8" />
   <title>Find LngLat</title>
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-GVN3DH5EQ1"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-GVN3DH5EQ1');
-</script>
   <!-- MapLibre GL CSS -->
   <link
     href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css"
@@ -32,7 +23,7 @@
       font-family: sans-serif;
     }
 
-    /* detailsタグのデフォルト矢印を少しスタイリング */
+    /* detailsタグで折りたたみを使う場合は引き続き利用可能 */
     details summary {
       cursor: pointer;
       font-weight: bold;
@@ -41,14 +32,13 @@
       margin-bottom: 5px;
     }
 
-    /* 折りたたみのボーダーなど（好みに応じて） */
     #info-details {
       padding: 5px 10px;
       background-color: #f8f8f8;
       border-bottom: 1px solid #ccc;
     }
 
-    /* 検索ボックス等をまとめるコンテナ */
+    /* 全体的な操作系 */
     #controls-container {
       display: flex;
       flex-wrap: wrap;
@@ -84,24 +74,26 @@
       cursor: pointer;
     }
 
-    /* 地図表示領域を大きめに確保 */
+    /* 地図表示領域 */
     #map {
       width: 100%;
-      height: 85vh;
+      height: 80vh;
     }
 
-    /* ポップアップなどは従来通り */
+    /* カスタムポップアップ */
     .custom-popup {
       background-color: white;
       border: 1px solid black;
       padding: 6px;
       font-size: 14px;
-      cursor: pointer;
-      transition: opacity 0.8s ease;
+      cursor: pointer; /* PCでのクリックだけでなく、タップも可 */
+      transition: opacity 0.8s ease; /* フェードアウト用 */
     }
     .fade-out {
       opacity: 0 !important;
     }
+
+    /* トースト（コピー完了メッセージ）用スタイル */
     .copy-toast {
       position: fixed;
       top: 10%;
@@ -123,14 +115,13 @@
   </style>
 </head>
 <body>
-  <!-- 1. detailsタグで折りたたみ -->
+  <!-- 折りたたみ例: タイトル + 説明文 -->
   <details id="info-details" open>
-    <!-- open属性を付けると最初から展開した状態になる(必要に応じて外す) -->
-    <summary>Find LngLat (説明を表示/非表示)</summary>
+    <summary>Find LngLat (クリックで説明表示/非表示)</summary>
     <p>
       このページでは任意地点の緯度経度をコピペできます。<br />
       使い方：検索ボックスで検索するか、地図を動かして緯度経度を取得したい地点を
-      <strong>右クリック</strong>してください。その後、CSVなどに貼りつけてご利用ください。<br />
+      <strong>クリック</strong>してください。その後、CSVなどに貼りつけてご利用ください。<br />
       利用地図：OpenStreetMap(©OpenStreetMap Contributors),
       <a href="https://github.com/armd-02/Playgrounds/tree/main/tiles" target="_blank" rel="noopener">
         osmfj_poi.json(K-Sakanoshita)
@@ -143,7 +134,7 @@
     </p>
   </details>
 
-  <!-- 検索ボックス + スタイル切り替え用セレクトボックス -->
+  <!-- 検索ボックス + スタイル切り替え -->
   <div id="controls-container">
     <!-- 検索ボックス -->
     <div class="control-group">
@@ -210,14 +201,18 @@
       }, 3000);
     }
 
-    // 右クリックで座標取得
-    map.on('contextmenu', (e) => {
+    // ★ 変更箇所 ★
+    // 右クリック(contextmenu) → 左クリック(click) に変更
+    // スマホ・タブレットのタップでもmap.on("click")が呼ばれます
+    map.on('click', (e) => {
       const lng = e.lngLat.lng.toFixed(6);
       const lat = e.lngLat.lat.toFixed(6);
 
+      // 既存のポップアップを削除
       const existingPopups = document.querySelectorAll('.maplibregl-popup');
       existingPopups.forEach(popup => popup.remove());
 
+      // 新しいポップアップを生成
       const popup = new maplibregl.Popup({ closeOnClick: false })
         .setLngLat([lng, lat])
         .setHTML(`
@@ -230,10 +225,12 @@
       setTimeout(() => {
         const popupContent = popup.getElement().querySelector('.custom-popup');
         if (!popupContent) return;
+        // ポップアップ上を再度クリック（またはタップ）すると座標をコピー
         popupContent.addEventListener('click', async () => {
           try {
             await navigator.clipboard.writeText(`${lat}, ${lng}`);
             showCopyToast('クリップボードにコピーしました！');
+            // フェードアウト処理
             popupContent.classList.add('fade-out');
             setTimeout(() => popup.remove(), 800);
           } catch (err) {
