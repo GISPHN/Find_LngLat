@@ -18,12 +18,13 @@
   />
   <style>
     body {
-      margin: 0; padding: 0;
+      margin: 0; 
+      padding: 0;
       font-family: sans-serif;
       position: relative;
     }
 
-    /* ====== 正しい説明文 ====== */
+    /* ====== 説明文（新しい内容） ====== */
     details summary {
       cursor: pointer;
       font-weight: bold;
@@ -36,7 +37,7 @@
       border-bottom: 1px solid #ccc;
     }
 
-    /* ====== 操作パネル ====== */
+    /* 操作パネル */
     #controls-container {
       display: flex;
       flex-wrap: wrap;
@@ -54,40 +55,51 @@
       gap: 5px;
     }
     #search-input {
-      width: 200px; height: 30px;
-      font-size: 16px; padding: 5px;
+      width: 200px; 
+      height: 30px;
+      font-size: 16px; 
+      padding: 5px;
     }
     #search-button,
     #tansa-start-button,
     #register-button,
     #stop-button {
-      height: 34px; font-size: 14px;
-      padding: 5px 12px; cursor: pointer;
+      height: 34px; 
+      font-size: 14px; 
+      padding: 5px 12px; 
+      cursor: pointer;
     }
     #style-select {
-      height: 34px; font-size: 14px; cursor: pointer;
+      height: 34px; 
+      font-size: 14px; 
+      cursor: pointer;
     }
 
-    /* ====== 地図エリア ====== */
+    /* 地図エリア */
     #map {
       width: 100%;
       height: 65vh;
       position: relative;
     }
 
-    /* ====== 現在地ボタン (左下) ====== */
+    /* 現在地ボタン (左下) */
     #get-location-button {
       position: absolute;
-      bottom: 10px; left: 10px;
+      bottom: 10px; 
+      left: 10px;
       z-index: 999;
-      width: 60px; height: 60px;
+      width: 60px; 
+      height: 60px;
       border-radius: 50%;
       background-color: transparent;
       border: 2px solid #444;
       color: #444;
       font-size: 26px;
-      display: flex; justify-content: center; align-items: center;
-      cursor: pointer; transition: all 0.3s;
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      cursor: pointer; 
+      transition: all 0.3s;
     }
     #get-location-button.active {
       background-color: #87CEFA;
@@ -95,7 +107,7 @@
       border: none;
     }
 
-    /* ====== ポップアップ ====== */
+    /* ポップアップ */
     .custom-popup {
       background-color: white;
       border: 1px solid black;
@@ -104,9 +116,11 @@
       cursor: pointer;
       transition: opacity 0.8s ease;
     }
-    .fade-out { opacity: 0 !important; }
+    .fade-out {
+      opacity: 0 !important;
+    }
 
-    /* ====== トースト(座標コピー) ====== */
+    /* トースト(座標コピーなど) */
     .copy-toast {
       position: fixed;
       top: 10%;
@@ -117,83 +131,113 @@
       padding: 12px 20px;
       border-radius: 4px;
       font-size: 14px;
-      opacity: 0; transition: opacity 0.5s, transform 0.5s;
+      opacity: 0;
+      transition: opacity 0.5s, transform 0.5s;
       z-index: 9999;
     }
     .copy-toast.visible {
-      opacity: 1; transform: translate(-50%, 0);
+      opacity: 1; 
+      transform: translate(-50%, 0);
     }
 
-    /* ====== 出力モーダル (GPX/KML) ====== */
+    /* 出力モーダル (GPX/KML) */
     #export-modal {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      right: 0; 
+      bottom: 0;
       background-color: rgba(0,0,0,0.5);
-      display: none; align-items: center; justify-content: center;
+      display: none; 
+      align-items: center; 
+      justify-content: center;
       z-index: 99999;
     }
     #export-modal-content {
-      background: #fff; padding: 20px; border-radius: 8px; max-width: 300px;
+      background: #fff; 
+      padding: 20px; 
+      border-radius: 8px; 
+      max-width: 300px;
       text-align: center;
     }
     #export-modal-buttons {
       margin-top: 15px;
-      display: flex; flex-wrap: wrap;
+      display: flex; 
+      flex-wrap: wrap;
       gap: 10px;
       justify-content: center;
     }
     /* 出力選択画面(ボタン大きく) */
     #export-modal-buttons button {
-      font-size: 18px;
-      padding: 8px 16px;
+      font-size: 18px; 
+      padding: 8px 16px; 
       cursor: pointer;
     }
 
-    /* ====== タグ選択モーダル ====== */
+    /* タグ選択モーダル */
     #tag-modal {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      right: 0; 
+      bottom: 0;
       background-color: rgba(0,0,0,0.5);
-      display: none; align-items: center; justify-content: center;
+      display: none; 
+      align-items: center; 
+      justify-content: center;
       z-index: 99999;
     }
     #tag-modal-content {
-      background: #fff; padding: 20px; border-radius: 8px; max-width: 400px;
+      background: #fff; 
+      padding: 20px; 
+      border-radius: 8px; 
+      max-width: 400px;
       text-align: center;
     }
     #tag-list {
-      display: flex; flex-direction: column; align-items: flex-start;
-      margin-top: 10px; gap: 10px;
+      display: flex; 
+      flex-direction: column; 
+      align-items: flex-start;
+      margin-top: 10px; 
+      gap: 10px; /* ボタン間隔広め */
     }
     #tag-list button {
-      font-size: 18px; padding: 8px 16px; cursor: pointer;
+      font-size: 18px; 
+      padding: 8px 16px;
+      cursor: pointer;
     }
     #tag-cancel {
-      font-size: 18px; padding: 8px 16px; margin-top: 10px; cursor: pointer;
+      font-size: 18px; 
+      padding: 8px 16px; 
+      margin-top: 10px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <!-- ===== 前回の正しい説明文 ===== -->
+  <!-- === 説明文のみ変更 === -->
   <details id="info-details" open>
     <summary>Find LngLat</summary>
     <p>
-      このページでは任意地点の緯度経度をコピペできます<br>
-      使い方：検索ボックスで検索するか、地図を動かして緯度経度を取得したい地点を右クリックしてください。その後、CSVなどに貼りつけてご利用ください。<br>
-      地区踏査モードを利用すると移動の軌跡や地点にコメントを登録できます。結果はGPXとして出力しQGISでも利用できます。<br>
-      利用地図：OpenStreetMap(©OpenStreetMap Contributors), osmfj_poi.json(K-Sakanoshita)<br>
-      利用API：OpenStreetMap Nominatim APIを利用しています。<br>
-      作成者：@GISPHN
+      このページでは任意地点の緯度経度をコピペできます<br />
+      使い方：検索ボックスで検索するか、地図を動かして緯度経度を取得したい地点を右クリックしてください。その後、CSVなどに貼りつけてご利用ください<br />
+      地区踏査モードを利用すると移動の軌跡や地点にコメントを登録できます。結果はGPXとして出力しQGISでも利用できます。<br />
+      利用地図：OpenStreetMap(©OpenStreetMap Contributors), 
+      <a href="https://github.com/armd-02/Playgrounds/tree/main/tiles" target="_blank" rel="noopener">osmfj_poi.json(K-Sakanoshita)</a>, 
+      全国最新写真(<a href="https://maps.gsi.go.jp/development/ichiran.html#seamlessphoto" target="_blank" rel="noopener">地理院タイル</a>)<br />
+      利用API：OpenStreetMap Nominatim APIを利用しています。<br />
+      作成者：
+      <a href="https://x.com/GISPHN" target="_blank" rel="noopener">@GISPHN</a>
     </p>
   </details>
 
-  <!-- ====== 操作パネル ====== -->
+  <!-- 操作パネル -->
   <div id="controls-container">
-    <!-- 検索 -->
     <div class="control-group">
       <input type="text" id="search-input" placeholder="施設名や住所..." />
       <button id="search-button">検索</button>
     </div>
 
-    <!-- スタイル切り替え -->
     <div class="control-group">
       <label for="style-select">地図スタイル：</label>
       <select id="style-select">
@@ -203,7 +247,6 @@
       </select>
     </div>
 
-    <!-- 地区踏査モード開始ボタン -->
     <div class="control-group">
       <button id="tansa-start-button">地区踏査モード開始</button>
       <button id="register-button">登録</button>
@@ -211,9 +254,8 @@
     </div>
   </div>
 
-  <!-- ====== 地図 ====== -->
+  <!-- 地図本体 -->
   <div id="map">
-    <!-- 現在地ボタン (左下) -->
     <button id="get-location-button" title="現在地">
       <i class="fas fa-location-arrow"></i>
     </button>
@@ -254,19 +296,53 @@
   <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
   <script>
     /* ============================================================
-       0) visibilitychange でスリープ復帰→点線ブリッジ
+       A) visibilitychange で スリープ復帰を検知 → nextPointIsResume
     ============================================================ */
     let nextPointIsResume = false;
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
-        // 復帰 → 次回の取得で点線を引く
         nextPointIsResume = true;
       }
     });
 
     /* ============================================================
-       1) 地図初期化
+       B) 地図初期化 + styledata でソース・レイヤーを再登録
     ============================================================ */
+    let solidLineSource = {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        geometry: { type: 'LineString', coordinates: [] }
+      }
+    };
+    let solidLineLayer = {
+      id: 'solid-line-layer',
+      type: 'line',
+      source: 'solid-line-source',
+      paint: {
+        'line-color': '#0000ff',
+        'line-width': 3
+      }
+    };
+
+    let dottedLineSource = {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: []
+      }
+    };
+    let dottedLineLayer = {
+      id: 'dotted-line-layer',
+      type: 'line',
+      source: 'dotted-line-source',
+      paint: {
+        'line-color': '#0000ff',
+        'line-width': 3,
+        'line-dasharray': [2,2]
+      }
+    };
+
     const map = new maplibregl.Map({
       container: 'map',
       style: 'https://tile.openstreetmap.jp/styles/osm-bright/style.json',
@@ -274,11 +350,39 @@
       zoom: 13
     });
 
+    // ソース/レイヤーを再登録する関数
+    function registerSourcesAndLayers() {
+      // solid
+      if (!map.getSource('solid-line-source')) {
+        map.addSource('solid-line-source', solidLineSource);
+      }
+      if (!map.getLayer('solid-line-layer')) {
+        map.addLayer(solidLineLayer);
+      }
+      // dotted
+      if (!map.getSource('dotted-line-source')) {
+        map.addSource('dotted-line-source', dottedLineSource);
+      }
+      if (!map.getLayer('dotted-line-layer')) {
+        map.addLayer(dottedLineLayer);
+      }
+    }
+
+    // styledata イベントで再登録
+    map.on('styledata', () => {
+      registerSourcesAndLayers();
+    });
+
+    // 初期ロード完了後にも一度登録
+    map.on('load', () => {
+      registerSourcesAndLayers();
+    });
+
     // スタイル切り替え
     document.getElementById('style-select').addEventListener('change', (e) => {
       const val = e.target.value;
       if (val.includes('cyberjapandata.gsi.go.jp')) {
-        // ラスタースタイル
+        // ラスタースタイル(全国最新写真)
         map.setStyle({
           version: 8,
           sources: {
@@ -305,13 +409,15 @@
     });
 
     /* ============================================================
-       2) 右クリックで座標コピー
+       C) 右クリックで座標コピー (contextmenu)
     ============================================================ */
     map.on('contextmenu', (e) => {
       const lng = e.lngLat.lng.toFixed(6);
       const lat = e.lngLat.lat.toFixed(6);
 
+      // 既存popup削除
       document.querySelectorAll('.maplibregl-popup').forEach(p => p.remove());
+
       const popup = new maplibregl.Popup({ closeOnClick: false })
         .setLngLat([ lng, lat ])
         .setHTML(`
@@ -338,23 +444,23 @@
     });
 
     /* ============================================================
-       3) 現在地ボタン
+       D) 現在地ボタン
     ============================================================ */
     const locBtn = document.getElementById('get-location-button');
     let currentMarker = null;
     locBtn.addEventListener('click', () => {
       if (!navigator.geolocation) {
-        alert("このブラウザは位置情報に対応していません。");
+        alert("ブラウザが位置情報に対応していません。");
         return;
       }
       locBtn.classList.add('active');
-
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           locBtn.classList.remove('active');
           const { latitude, longitude } = pos.coords;
           map.setCenter([ longitude, latitude ]);
           map.setZoom(16);
+
           if (currentMarker) currentMarker.remove();
           currentMarker = new maplibregl.Marker({ color: "blue" })
             .setLngLat([ longitude, latitude ])
@@ -369,104 +475,39 @@
     });
 
     /* ============================================================
-       4) ソース/レイヤーを再登録 (styledataイベント)
-          実線: solidLineSource / solidLineLayer
-          点線: dottedLineSource / dottedLineLayer
+       E) 軌跡(実線 + 点線) 
     ============================================================ */
-    // 実線データ
-    const solidLineSource = {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        geometry: { type: 'LineString', coordinates: [] }
-      }
-    };
-    const solidLineLayer = {
-      id: 'solid-line-layer',
-      type: 'line',
-      source: 'solid-line-source',
-      paint: {
-        'line-color': '#0000ff',
-        'line-width': 3
-      }
-    };
-
-    // 点線データ (復帰後1回だけ)
-    const dottedLineSource = {
-      type: 'geojson',
-      data: {
-        type: 'FeatureCollection',
-        features: []
-      }
-    };
-    const dottedLineLayer = {
-      id: 'dotted-line-layer',
-      type: 'line',
-      source: 'dotted-line-source',
-      paint: {
-        'line-color': '#0000ff',
-        'line-width': 3,
-        'line-dasharray': [2,2]
-      }
-    };
-
-    // styledata -> ソース/レイヤー再登録
-    map.on('styledata', () => {
-      if (!map.getSource('solid-line-source')) {
-        map.addSource('solid-line-source', solidLineSource);
-      }
-      if (!map.getLayer('solid-line-layer')) {
-        map.addLayer(solidLineLayer);
-      }
-      if (!map.getSource('dotted-line-source')) {
-        map.addSource('dotted-line-source', dottedLineSource);
-      }
-      if (!map.getLayer('dotted-line-layer')) {
-        map.addLayer(dottedLineLayer);
-      }
-    });
-
-    // 実線に点を追加
     function addSolidLinePoint(lng, lat) {
-      let coords = solidLineSource.data.geometry.coordinates;
+      const coords = solidLineSource.data.geometry.coordinates;
       coords.push([ lng, lat ]);
       map.getSource('solid-line-source').setData(solidLineSource.data);
     }
-    // 点線を1本追加
     function addDottedLineSegment(prevLng, prevLat, lng, lat) {
       dottedLineSource.data.features.push({
         type: 'Feature',
         geometry: {
           type: 'LineString',
-          coordinates: [ [prevLng, prevLat], [lng, lat] ]
+          coordinates: [[prevLng, prevLat],[lng, lat]]
         }
       });
       map.getSource('dotted-line-source').setData(dottedLineSource.data);
     }
-    // クリアするとき
-    function clearTracks() {
-      solidLineSource.data.geometry.coordinates = [];
-      map.getSource('solid-line-source').setData(solidLineSource.data);
-
-      dottedLineSource.data.features = [];
-      map.getSource('dotted-line-source').setData(dottedLineSource.data);
-    }
 
     /* ============================================================
-       5) 地区踏査モード開始
-          - スリープ注意アラート
-          - 5秒ごとの位置取得
+       F) 地区踏査モード開始
     ============================================================ */
     let trackIntervalId = null;
     let lastPoint = null;
 
     document.getElementById('tansa-start-button').addEventListener('click', () => {
-      // スリープ注意
       alert("この画面がスリープ、ロック、スマホのホーム画面になると位置情報の取得が一時停止します。\n継続的に取得したい場合はスリープをオフにして常に表示してください");
 
-      // 初期化
       if (trackIntervalId) clearInterval(trackIntervalId);
-      clearTracks();
+      // 初期化
+      solidLineSource.data.geometry.coordinates = [];
+      dottedLineSource.data.features = [];
+      map.getSource('solid-line-source').setData(solidLineSource.data);
+      map.getSource('dotted-line-source').setData(dottedLineSource.data);
       lastPoint = null;
       nextPointIsResume = false;
 
@@ -474,10 +515,9 @@
         doTrackUpdate();
       }, 5000);
 
-      alert("地区踏査モードを開始しました。（5秒間隔）");
+      alert("地区踏査モードを開始しました。（5秒間隔で取得）");
     });
 
-    // 実際に位置取得して線描画
     function doTrackUpdate() {
       if (!navigator.geolocation) return;
       navigator.geolocation.getCurrentPosition(
@@ -485,98 +525,52 @@
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
           if (lastPoint && nextPointIsResume) {
-            // スリープ復帰 → 点線でブリッジ
             addDottedLineSegment(lastPoint.lng, lastPoint.lat, lng, lat);
             nextPointIsResume = false;
           } else {
-            // 通常（実線）
             addSolidLinePoint(lng, lat);
           }
           lastPoint = { lat, lng };
         },
         (err) => {
-          console.error("位置情報取得失敗:", err);
+          console.error("位置情報取得に失敗:", err);
         },
         { enableHighAccuracy: true }
       );
     }
 
     /* ============================================================
-       6) 登録ボタン → タグ選択モーダル etc.
-         (簡易的に実装例)
+       G) 登録 (タグ選択モーダルなど)
     ============================================================ */
-    document.getElementById('register-button').addEventListener('click', async () => {
-      if (!trackIntervalId) {
-        alert("まだ地区踏査モードが開始されていません。");
-        return;
-      }
-      if (!navigator.geolocation) {
-        alert("ブラウザが位置情報に対応していません。");
-        return;
-      }
-      // 現在位置を取得 → コメントやタグ
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          const c1 = prompt("コメント1を入力してください") || "";
-          const c2 = prompt("コメント2を入力してください") || "";
-
-          // タグ選択
-          const selectedTag = await showTagModal(); 
-          // 省略: WP保存など
-
-          // ここでマーカーを追加
-          new maplibregl.Marker({ color: "red" })
-            .setLngLat([ lng, lat ])
-            .setPopup(new maplibregl.Popup().setHTML(`
-              ${c1 ? "Comment1: " + c1 + "<br>" : ""}
-              ${c2 ? "Comment2: " + c2 + "<br>" : ""}
-              ${selectedTag ? "Tag: " + selectedTag : ""}
-            `))
-            .addTo(map);
-
-          alert("登録しました。");
-        },
-        (err) => {
-          alert("位置情報取得失敗: " + err.message);
-        },
-        { enableHighAccuracy: true }
-      );
+    document.getElementById('register-button').addEventListener('click', () => {
+      // 省略: ここでタグなどを入力し、Waypointsに登録 など
+      alert("登録処理を実装してください。（タグ選択モーダルも）");
     });
 
     /* ============================================================
-       7) 終了ボタン → 出力モーダル
+       H) 終了 (出力モーダル)
     ============================================================ */
     document.getElementById('stop-button').addEventListener('click', () => {
-      if (!trackIntervalId) {
-        alert("まだ地区踏査モードが開始されていません。");
-        return;
+      if (trackIntervalId) {
+        clearInterval(trackIntervalId);
+        trackIntervalId = null;
       }
-      clearInterval(trackIntervalId);
-      trackIntervalId = null;
-
-      // 出力モーダルを開く
+      // 出力モーダルを表示
       document.getElementById('export-modal').style.display = 'flex';
     });
-
-    // 出力モーダル (GPX/KML ダウンロードは省略例)
     document.getElementById('download-gpx').addEventListener('click', () => {
-      // 例: GPX生成 → downloadFile(...)
-      alert("GPXダウンロード処理(例)");
+      alert("GPXを生成・ダウンロードする処理を実装してください");
     });
     document.getElementById('download-kml').addEventListener('click', () => {
-      alert("KMLダウンロード処理(例)");
+      alert("KMLを生成・ダウンロードする処理を実装してください");
     });
     document.getElementById('export-close').addEventListener('click', () => {
       document.getElementById('export-modal').style.display = 'none';
-      // 軌跡をクリアなど
-      clearTracks();
-      lastPoint = null;
+      // 位置情報などの初期化処理があれば行う
     });
 
     /* ============================================================
-       8) タグモーダル
+       I) タグ選択モーダル
     ============================================================ */
     const tagModal = document.getElementById('tag-modal');
     const tagList = document.getElementById('tag-list');
@@ -585,13 +579,13 @@
     function showTagModal() {
       return new Promise((resolve) => {
         function handleClick(e) {
-          const tagVal = e.currentTarget.getAttribute('data-tag');
+          const tag = e.currentTarget.getAttribute('data-tag');
           cleanup();
-          resolve(tagVal);
+          resolve(tag);
         }
         function handleCancel() {
           cleanup();
-          resolve(null);
+          resolve(null); // スキップ
         }
         function cleanup() {
           tagModal.style.display = 'none';
@@ -604,13 +598,12 @@
           btn.addEventListener('click', handleClick);
         });
         tagCancel.addEventListener('click', handleCancel);
-
         tagModal.style.display = 'flex';
       });
     }
 
     /* ============================================================
-       9) トースト表示(座標コピーなど)
+       J) トースト表示
     ============================================================ */
     function showToast(msg) {
       const old = document.querySelector('.copy-toast');
@@ -624,9 +617,7 @@
       setTimeout(() => toast.classList.add('visible'), 10);
       setTimeout(() => toast.classList.remove('visible'), 2000);
       setTimeout(() => {
-        if (toast.parentNode) {
-          toast.parentNode.removeChild(toast);
-        }
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
       }, 3000);
     }
   </script>
