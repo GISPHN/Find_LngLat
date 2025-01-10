@@ -11,8 +11,8 @@
   <!-- Font Awesome（現在地アイコンなど） -->
   <link
     rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-    integrity="sha512-fa8dsp+MxFf43utQyWbr0v4qEAz1zHUGaNJ8M0bDzfrBms9D8h/xVEqdnt2bl6v0kOk9FSOcTpDu7AJ6bHguag=="
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    integrity="sha512-ku/tNh+1dz0O1tS1b1jY8yU6VhnZTc49iUOl9lvD3VKRt13ra8PbHj6HL+ezm84F+hb36klyIVb6RkS57K9dkg=="
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   />
@@ -214,6 +214,43 @@
       margin-top: 10px;
       cursor: pointer;
     }
+
+    /* ===== コメント入力モーダル ===== */
+    #comment-modal {
+      position: fixed;
+      top: 0; 
+      left: 0; 
+      right: 0; 
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100000;
+    }
+    #comment-modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      width: 300px;
+      text-align: center;
+    }
+    #comment-modal-content input {
+      width: 90%;
+      padding: 8px;
+      margin: 5px 0;
+      font-size: 16px;
+    }
+    #comment-modal-buttons {
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-around;
+    }
+    #comment-modal-buttons button {
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -229,7 +266,7 @@
       <a href="https://github.com/armd-02/Playgrounds/tree/main/tiles" target="_blank" rel="noopener">osmfj_poi.json(K-Sakanoshita)</a>, 
       全国最新写真(<a href="https://maps.gsi.go.jp/development/ichiran.html#seamlessphoto" target="_blank" rel="noopener">地理院タイル</a>)<br />
       利用API：OpenStreetMap Nominatim APIを利用しています。<br />
-      地区踏査モード使用時のみ：NoSleep.jsを使用 
+      地区踏査モード使用時のみ：<a href="https://github.com/richtr/NoSleep.js" target="_blank" rel="noopener">NoSleep.js</a>を使用 
       (<a href="https://github.com/richtr/NoSleep.js" target="_blank" rel="noopener">https://github.com/richtr/NoSleep.js</a>)<br />
       作成者：
       <a href="https://x.com/GISPHN" target="_blank" rel="noopener">@GISPHN</a>
@@ -294,6 +331,19 @@
         <button data-tag="情報とコミュニケーション">9.情報とコミュニケーション</button>
       </div>
       <button id="tag-cancel">スキップ</button>
+    </div>
+  </div>
+
+  <!-- コメント入力モーダル -->
+  <div id="comment-modal">
+    <div id="comment-modal-content">
+      <p>コメントを入力してください</p>
+      <input type="text" id="comment1-input" placeholder="コメント1" />
+      <input type="text" id="comment2-input" placeholder="コメント2" />
+      <div id="comment-modal-buttons">
+        <button id="comment-submit">送信</button>
+        <button id="comment-cancel">キャンセル</button>
+      </div>
     </div>
   </div>
 
@@ -374,7 +424,7 @@
     map.on('load', () => {
       registerSourcesAndLayers();
     });
-    map.on('styledata', () => {
+    map.on('style.load', () => {  // 修正: 'styledata' から 'style.load' に変更
       registerSourcesAndLayers();
     });
 
@@ -429,14 +479,30 @@
         const content = popup.getElement().querySelector('.custom-popup');
         if (!content) return;
         content.addEventListener('click', async () => {
-          try {
-            await navigator.clipboard.writeText(`${lat}, ${lng}`);
-            showToast("クリップボードにコピーしました！");
-            content.classList.add('fade-out');
-            setTimeout(() => popup.remove(), 800);
-          } catch (err) {
-            alert("コピーに失敗: " + err);
+          const textToCopy = `${lat}, ${lng}`;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+              await navigator.clipboard.writeText(textToCopy);
+              showToast("クリップボードにコピーしました！");
+            } catch (err) {
+              alert("コピーに失敗: " + err);
+            }
+          } else {
+            // フォールバック: テキストエリアを使用
+            const textarea = document.createElement('textarea');
+            textarea.value = textToCopy;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+              document.execCommand('copy');
+              showToast("クリップボードにコピーしました！");
+            } catch (err) {
+              alert("コピーに失敗: " + err);
+            }
+            document.body.removeChild(textarea);
           }
+          content.classList.add('fade-out');
+          setTimeout(() => popup.remove(), 800);
         });
       }, 100);
     });
@@ -473,7 +539,7 @@
     /* ====== 軌跡(実線/点線) & trackPoints ====== */
     let trackIntervalId = null;
     let lastPoint = null;
-    let trackPoints = []; // { lat,lng,speed,ele,timeJST }
+    let trackPoints = []; // { lat,lng,speed,ele,timeISO }
 
     function addSolidLinePoint(lng, lat) {
       solidLineSource.data.geometry.coordinates.push([ lng, lat ]);
@@ -526,10 +592,10 @@
         (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
-          const jstTime = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+          const timeISO = getISOTime();
           waypoints.push({
             lat, lng,
-            timeJST: jstTime,
+            timeISO,
             comment1: "スタート",
             comment2: "",
             tag: ""
@@ -552,9 +618,9 @@
           const lng = pos.coords.longitude;
           const speed = pos.coords.speed || 0;
           const ele   = pos.coords.altitude || 0;
-          const timeJST = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+          const timeISO = new Date().toISOString();
 
-          trackPoints.push({ lat, lng, speed, ele, timeJST });
+          trackPoints.push({ lat, lng, speed, ele, timeISO });
 
           if (lastPoint && nextPointIsResume) {
             addDottedLineSegment(lastPoint.lng, lastPoint.lat, lng, lat);
@@ -585,14 +651,13 @@
         async (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
-          const timeJST = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
-          const c1 = prompt("コメント1を入力してください") || "";
-          const c2 = prompt("コメント2を入力してください") || "";
+          const timeISO = getISOTime();
+          const { c1, c2 } = await showCommentModal();  // 修正: prompt からカスタムモーダルに変更
           const selectedTag = await showTagModal();
 
           waypoints.push({
             lat, lng,
-            timeJST,
+            timeISO,
             comment1: c1,
             comment2: c2,
             tag: selectedTag || ""
@@ -633,10 +698,10 @@
         (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
-          const timeJST = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+          const timeISO = getISOTime();
           waypoints.push({
             lat, lng,
-            timeJST,
+            timeISO,
             comment1: "ゴール",
             comment2: "",
             tag: ""
@@ -654,21 +719,13 @@
       const gpxData = generateGPX();
       const filename = "track_" + getNowYMDHMS() + ".gpx";
       downloadFile(gpxData, filename, "application/gpx+xml");
-      // NoSleep無効化
-      if (noSleepEnabled) {
-        noSleep.disable();
-        noSleepEnabled = false;
-      }
+      // NoSleep無効化は適用していません
     });
     document.getElementById('download-kml').addEventListener('click', () => {
       const kmlData = generateKML();
       const filename = "track_" + getNowYMDHMS() + ".kml";
       downloadFile(kmlData, filename, "application/vnd.google-earth.kml+xml");
-      // NoSleep無効化
-      if (noSleepEnabled) {
-        noSleep.disable();
-        noSleepEnabled = false;
-      }
+      // NoSleep無効化は適用していません
     });
     document.getElementById('export-close').addEventListener('click', () => {
       document.getElementById('export-modal').style.display = 'none';
@@ -683,6 +740,7 @@
         map.getSource('dotted-line-source').setData(dottedLineSource.data);
       }
       lastPoint = null;
+      // NoSleep無効化は適用していません
     });
 
     /* ====== GPX/KML生成 ====== */
@@ -696,6 +754,10 @@
       const ss = String(now.getSeconds()).padStart(2,'0');
       return `${yyyy}${MM}${dd}${hh}${mm}${ss}`;
     }
+    function getISOTime() {  // 修正: ISO 8601形式で取得
+      return new Date().toISOString();
+    }
+
     function generateGPX() {
       let gpx = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="FindLngLat+NoSleep" xmlns="http://www.topografix.com/GPX/1/1">
@@ -704,21 +766,21 @@
     <trkseg>
 `;
       trackPoints.forEach(tp => {
-        gpx += `      <trkpt lat="${tp.lat}" lon="${tp.lng}">
-        <time>${tp.timeJST} JST</time>
-        <speed>${tp.speed}</speed>
-        <ele>${tp.ele}</ele>
-      </trkpt>
+        gpx += `    <trkpt lat="${tp.lat}" lon="${tp.lng}">
+      <time>${tp.timeISO}</time>
+      <speed>${tp.speed}</speed>
+      <ele>${tp.ele}</ele>
+    </trkpt>
 `;
       });
-      gpx += `    </trkseg>
-  </trk>
+      gpx += `  </trkseg>
+</trk>
 
-  <!-- waypoints --> 
+<!-- waypoints --> 
 `;
       waypoints.forEach(wp => {
         gpx += `  <wpt lat="${wp.lat}" lon="${wp.lng}">
-    <time>${wp.timeJST} JST</time>
+    <time>${wp.timeISO}</time>
     <name>${wp.comment1 || ''}</name>
     <cmt>${wp.comment2 || ''}</cmt>
     <desc>${wp.tag || ''}</desc>
@@ -754,7 +816,7 @@
         kml += `  <Placemark>
     <name>${wp.comment1 || ''}</name>
     <description><![CDATA[
-      ${wp.timeJST} JST<br/>
+      ${wp.timeISO}<br/>
       ${wp.comment2 ? "Comment2: " + wp.comment2 + "<br/>" : ""}
       ${wp.tag ? "Tag: " + wp.tag + "<br/>" : ""}
       (lat: ${wp.lat}, lng: ${wp.lng})
@@ -809,6 +871,38 @@
         });
         tagCancel.addEventListener('click', handleCancel);
         tagModal.style.display = 'flex';
+      });
+    }
+
+    /* ====== コメント入力モーダル ====== */
+    const commentModal = document.getElementById('comment-modal');
+    const comment1Input = document.getElementById('comment1-input');
+    const comment2Input = document.getElementById('comment2-input');
+    const commentSubmit = document.getElementById('comment-submit');
+    const commentCancel = document.getElementById('comment-cancel');
+
+    function showCommentModal() {
+      return new Promise((resolve) => {
+        function handleSubmit() {
+          const c1 = comment1Input.value.trim();
+          const c2 = comment2Input.value.trim();
+          cleanup();
+          resolve({ c1, c2 });
+        }
+        function handleCancel() {
+          cleanup();
+          resolve({ c1: "", c2: "" });
+        }
+        function cleanup() {
+          commentSubmit.removeEventListener('click', handleSubmit);
+          commentCancel.removeEventListener('click', handleCancel);
+          commentModal.style.display = 'none';
+          comment1Input.value = '';
+          comment2Input.value = '';
+        }
+        commentSubmit.addEventListener('click', handleSubmit);
+        commentCancel.addEventListener('click', handleCancel);
+        commentModal.style.display = 'flex';
       });
     }
 
