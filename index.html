@@ -229,6 +229,8 @@
       <a href="https://github.com/armd-02/Playgrounds/tree/main/tiles" target="_blank" rel="noopener">osmfj_poi.json(K-Sakanoshita)</a>, 
       全国最新写真(<a href="https://maps.gsi.go.jp/development/ichiran.html#seamlessphoto" target="_blank" rel="noopener">地理院タイル</a>)<br />
       利用API：OpenStreetMap Nominatim APIを利用しています。<br />
+      地区踏査モード使用時のみ：NoSleep.jsを使用 
+      (<a href="https://github.com/richtr/NoSleep.js" target="_blank" rel="noopener">https://github.com/richtr/NoSleep.js</a>)<br />
       作成者：
       <a href="https://x.com/GISPHN" target="_blank" rel="noopener">@GISPHN</a>
     </p>
@@ -828,6 +830,37 @@
         }
       }, 3000);
     }
+
+    /* ====== 検索ボタンの処理追加 ====== */
+    document.getElementById('search-button').addEventListener('click', async () => {
+      const query = document.getElementById('search-input').value.trim();
+      if (!query) {
+        alert("検索ワードを入力してください。");
+        return;
+      }
+      // Nominatim API (OpenStreetMap)
+      const apiUrl = `https://nominatim.openstreetmap.org/search?` +
+                     new URLSearchParams({
+                       q: query,
+                       format: "json",
+                       limit: 1
+                     });
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        if (data.length === 0) {
+          alert("検索結果が見つかりませんでした。");
+          return;
+        }
+        const { lat, lon } = data[0];
+        map.setCenter([parseFloat(lon), parseFloat(lat)]);
+        map.setZoom(16);
+      } catch (err) {
+        console.error(err);
+        alert("検索に失敗しました。");
+      }
+    });
   </script>
 </body>
 </html>
