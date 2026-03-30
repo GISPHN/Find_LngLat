@@ -333,7 +333,7 @@
     .fab-stack {
       position: fixed;
       right: 14px;
-      bottom: calc(var(--dock-h) + var(--safe-bottom) + 56px);
+      bottom: calc(var(--dock-h) + var(--safe-bottom) + 78px);
       z-index: 17;
       display: grid;
       gap: 10px;
@@ -570,16 +570,15 @@
       right: 10px;
       top: calc(var(--safe-top) + 78px);
       z-index: 24;
-      max-width: 900px;
+      max-width: 720px;
       margin: 0 auto;
-      background: rgba(37, 99, 235, 0.96);
+      background: rgba(37, 99, 235, 0.94);
       color: #fff;
-      border-radius: 18px;
+      border-radius: 16px;
       box-shadow: var(--shadow);
       padding: 10px 12px;
       display: none;
       align-items: center;
-      justify-content: space-between;
       gap: 10px;
     }
 
@@ -587,11 +586,41 @@
       display: flex;
     }
 
+    .mode-banner-main {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .mode-banner-main .title {
+      font-size: 0.92rem;
+      line-height: 1.2;
+    }
+
     .mode-banner .meta {
-      font-size: 0.78rem;
-      opacity: 0.92;
+      font-size: 0.74rem;
+      opacity: 0.95;
       margin-top: 2px;
-      line-height: 1.35;
+      line-height: 1.3;
+    }
+
+    .mode-banner-actions {
+      display: flex;
+      flex: 0 0 auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .mode-banner-actions button {
+      min-width: 72px;
+      min-height: 40px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.92);
+      color: #0f172a;
+      font-weight: 700;
+      white-space: nowrap;
+      writing-mode: horizontal-tb;
+      text-orientation: mixed;
     }
 
     .draft-marker {
@@ -620,6 +649,62 @@
       display: none !important;
     }
 
+    .hint a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+
+    .hint a:hover,
+    .hint a:focus {
+      text-decoration: underline;
+    }
+
+    .maplibregl-ctrl-top-right {
+      top: calc(var(--safe-top) + 112px) !important;
+      right: 10px !important;
+      z-index: 19 !important;
+    }
+
+    .maplibregl-ctrl-bottom-left,
+    .maplibregl-ctrl-bottom-right {
+      bottom: calc(var(--safe-bottom) + 0px) !important;
+      z-index: 70 !important;
+      pointer-events: auto !important;
+    }
+
+    .maplibregl-ctrl-bottom-left {
+      left: calc(env(safe-area-inset-left, 0px) + 14px) !important;
+    }
+
+    .maplibregl-ctrl-attrib {
+      font-size: 10px !important;
+      background: rgba(255,255,255,0.94) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+      margin: 0 !important;
+      max-width: calc(100vw - 24px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib {
+      margin-left: 0 !important;
+      margin-bottom: 2px !important;
+    }
+
+    @media (max-width: 640px) {
+      .maplibregl-ctrl-top-right {
+        top: calc(var(--safe-top) + 124px) !important;
+      }
+
+      .maplibregl-ctrl-attrib {
+        max-width: calc(100vw - 20px);
+        font-size: 9px !important;
+      }
+    }
+
+
     @media (min-width: 700px) {
       .grid-2,
       .form-grid {
@@ -643,36 +728,6 @@
         border-radius: 28px;
       }
     }
-  
-
-    .maplibregl-ctrl-bottom-left,
-    .maplibregl-ctrl-bottom-right {
-      bottom: calc(var(--safe-bottom) - 2px) !important;
-      z-index: 70 !important;
-      pointer-events: auto !important;
-    }
-
-    .maplibregl-ctrl-bottom-left {
-      left: calc(env(safe-area-inset-left, 0px) + 10px) !important;
-    }
-
-    .maplibregl-ctrl-attrib {
-      font-size: 10px !important;
-      background: rgba(255,255,255,0.94) !important;
-      border-radius: 10px !important;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
-      margin: 0 !important;
-      max-width: calc(100vw - 24px);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib {
-      margin-left: 0 !important;
-      margin-bottom: 2px !important;
-    }
-
   </style>
 </head>
 <body>
@@ -735,11 +790,14 @@
     </div>
 
     <div id="manualModeBanner" class="mode-banner" aria-live="polite">
-      <div>
+      <div class="mode-banner-main">
         <div class="title">任意地点追加モード</div>
-        <div class="meta">地図の空白部分をタップして配置します。長押しでも配置できます。</div>
+        <div class="meta">タップで配置、ドラッグで調整</div>
       </div>
-      <button id="manualModeCancelBtn" type="button">終了</button>
+      <div class="mode-banner-actions">
+        <button id="manualModeEditBtn" type="button">入力へ</button>
+        <button id="manualModeCancelBtn" type="button">終了</button>
+      </div>
     </div>
 
     <div class="fab-stack" aria-label="補助操作">
@@ -893,6 +951,31 @@
       </div>
     </div>
 
+
+    <div id="stopConfirmModal" class="modal" aria-hidden="true">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="stopConfirmModalTitle">
+        <div class="modal-head">
+          <div>
+            <div id="stopConfirmModalTitle" class="title">踏査をどうしますか？</div>
+            <div class="subtitle">誤操作でも続きから再開できます</div>
+          </div>
+          <button id="closeStopConfirmModalBtn" class="icon-btn" type="button" aria-label="閉じる">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="hint">
+            踏査を続けるか、いったん出力して後で再開するか、記録を破棄して終了するかを選択してください。
+          </div>
+          <div class="inline-actions">
+            <button id="continueTrackingBtn" class="btn-success" type="button">続ける</button>
+            <button id="pauseExportBtn" class="btn-primary" type="button">出力する</button>
+            <button id="discardTrackingBtn" class="btn-danger" type="button">破棄して終了</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 <div id="helpModal" class="modal" aria-hidden="true">
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle">
     <div class="modal-head">
@@ -977,6 +1060,8 @@
       longPressTimer: null,
       longPressTriggered: false,
       pointDraftSource: 'current',
+      suppressMapClickUntil: 0,
+      isPaused: false,
       settings: {
         mapStyle: 'osmfj-poi',
         gpsMode: 'high'
@@ -1005,11 +1090,11 @@
         'menuBtn','helpBtn','searchSheet','backdrop','searchInput','searchBtn','clearSearchBtn','searchResults',
         'styleSelect','gpsModeSelect','searchDockBtn','trackDockBtn','pointDockBtn','exportDockBtn',
         'currentBtn','statusBar','gpsDot','gpsText','trackDot','trackText','wakeDot','wakeText','titleSub',
-        'pointModeModal','closePointModeModalBtn','pointCurrentBtn','pointManualBtn','manualModeBanner','manualModeCancelBtn','pointModal','closePointModalBtn','cancelPointBtn','savePointBtn','capturePhotoBtn','removePhotoBtn',
+        'pointModeModal','closePointModeModalBtn','pointCurrentBtn','pointManualBtn','manualModeBanner','manualModeEditBtn','manualModeCancelBtn','pointModal','closePointModalBtn','cancelPointBtn','savePointBtn','capturePhotoBtn','removePhotoBtn',
         'photoInput','photoPreview','photoMeta','pointTitleInput','pointTagSelect','pointMemo1Input','pointMemo2Input',
         'pointModalTitle','pointModalSub','pointLat','pointLng','pointEle','pointAcc','exportModal','closeExportModalBtn','downloadGpxBtn',
         'downloadZipBtn','downloadJsonBtn','finishAndClearBtn','exportTrackCount','exportPointCount',
-        'exportPhotoCount','exportDistance','helpModal','closeHelpModalBtn','installHintBtn','toastWrap'
+        'exportPhotoCount','exportDistance','stopConfirmModal','closeStopConfirmModalBtn','continueTrackingBtn','pauseExportBtn','discardTrackingBtn','helpModal','closeHelpModalBtn','installHintBtn','toastWrap'
       ].forEach(id => els[id] = document.getElementById(id));
     }
 
@@ -1018,7 +1103,11 @@
       els.searchDockBtn.addEventListener('click', toggleSearchSheet);
       els.backdrop.addEventListener('click', () => {
         closeSearchSheet();
-        closeActiveModal();
+        if (appState.activeModal === els.exportModal && appState.isPaused) {
+          closeExportAndMaybeResume();
+        } else {
+          closeActiveModal();
+        }
       });
       els.searchBtn.addEventListener('click', handleSearch);
       els.searchInput.addEventListener('keydown', (e) => {
@@ -1042,7 +1131,15 @@
         }
       });
       els.currentBtn.addEventListener('click', moveToCurrentLocation);
-      els.trackDockBtn.addEventListener('click', () => appState.isTracking ? stopTracking() : startTracking());
+      els.trackDockBtn.addEventListener('click', () => {
+        if (appState.isTracking) {
+          openModal('stopConfirmModal');
+        } else if (appState.isPaused) {
+          resumeTrackingAfterExport();
+        } else {
+          startTracking();
+        }
+      });
       els.pointDockBtn.addEventListener('click', openPointModeModal);
       els.exportDockBtn.addEventListener('click', openExportModal);
       els.closePointModeModalBtn.addEventListener('click', closeActiveModal);
@@ -1052,6 +1149,7 @@
         activateManualPointMode();
       });
       els.manualModeCancelBtn.addEventListener('click', deactivateManualPointMode);
+      els.manualModeEditBtn.addEventListener('click', openPointModalFromManualDraft);
       els.helpBtn.addEventListener('click', () => openModal('helpModal'));
       els.closeHelpModalBtn.addEventListener('click', closeActiveModal);
       els.installHintBtn.addEventListener('click', showInstallHelp);
@@ -1063,11 +1161,15 @@
       els.removePhotoBtn.addEventListener('click', clearPointPhotoDraft);
       els.savePointBtn.addEventListener('click', savePointDraft);
 
-      els.closeExportModalBtn.addEventListener('click', closeActiveModal);
+      els.closeExportModalBtn.addEventListener('click', closeExportAndMaybeResume);
       els.downloadGpxBtn.addEventListener('click', exportGPX);
       els.downloadZipBtn.addEventListener('click', exportZipBundle);
       els.downloadJsonBtn.addEventListener('click', exportJsonBackup);
       els.finishAndClearBtn.addEventListener('click', clearAllDataWithConfirm);
+      els.closeStopConfirmModalBtn.addEventListener('click', closeActiveModal);
+      els.continueTrackingBtn.addEventListener('click', closeActiveModal);
+      els.pauseExportBtn.addEventListener('click', pauseTrackingForExport);
+      els.discardTrackingBtn.addEventListener('click', discardTrackingFromModal);
 
       window.addEventListener('beforeinstallprompt', (event) => {
         event.preventDefault();
@@ -1078,6 +1180,8 @@
         showToast('ホーム画面に追加されました。');
       });
       window.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('focus', handleResumeSignals);
+      window.addEventListener('pageshow', handleResumeSignals);
       window.addEventListener('online', () => showToast('オンラインに戻りました。'));
       window.addEventListener('offline', () => showToast('オフラインです。保存済みデータは保持されます。'));
     }
@@ -1088,12 +1192,13 @@
         style: STYLE_CATALOG[appState.settings.mapStyle] || STYLE_CATALOG['osm-bright'],
         center: [135.5022, 34.6937],
         zoom: 14,
-        attributionControl: true,
+        attributionControl: false,
         hash: false,
         cooperativeGestures: false
       });
 
       appState.map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
+      appState.map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
 
       appState.map.on('load', () => {
         ensureSourcesAndLayers();
@@ -1191,9 +1296,17 @@
     function attachWaypointPopupEvents() {
       if (appState.map.__waypointPopupBound) return;
       appState.map.__waypointPopupBound = true;
-      appState.map.on('click', 'waypoint-cluster-circle', handleClusterClick);
-      appState.map.on('click', 'waypoint-cluster-count', handleClusterClick);
-      appState.map.on('click', 'waypoint-circle', (event) => {
+      appState.map.on('click', 'waypoint-cluster-circle', (event) => {
+        appState.suppressMapClickUntil = Date.now() + 500;
+        handleClusterClick(event);
+      });
+      appState.map.on('click', 'waypoint-cluster-count', (event) => {
+        appState.suppressMapClickUntil = Date.now() + 500;
+        handleClusterClick(event);
+      });
+
+      const openWaypointPopup = (event) => {
+        appState.suppressMapClickUntil = Date.now() + 500;
         if (appState.currentPopup) {
           appState.currentPopup.remove();
           appState.currentPopup = null;
@@ -1211,7 +1324,10 @@
           .setLngLat(coords)
           .setHTML(html)
           .addTo(appState.map);
-      });
+      };
+
+      appState.map.on('click', 'waypoint-circle', openWaypointPopup);
+      appState.map.on('click', 'waypoint-label', openWaypointPopup);
       ['waypoint-circle', 'waypoint-label', 'waypoint-cluster-circle', 'waypoint-cluster-count'].forEach(layerId => {
         appState.map.on('mouseenter', layerId, () => appState.map.getCanvas().style.cursor = 'pointer');
         appState.map.on('mouseleave', layerId, () => appState.map.getCanvas().style.cursor = '');
@@ -1269,7 +1385,7 @@
           if (isWaypointFeatureAtPoint(startPoint)) return;
           appState.longPressTriggered = true;
           activateManualPointMode({ silent: true });
-          placeManualDraftAt(startLngLat, { openModalAfter: true });
+          placeManualDraftAt(startLngLat, { openModalAfter: false });
           showToast('任意地点ポイントを配置しました。');
         }, 650);
       }, { passive: true });
@@ -1297,6 +1413,10 @@
     }
 
     function handleMapClick(event) {
+      if (Date.now() < (appState.suppressMapClickUntil || 0)) {
+        return;
+      }
+
       if (isWaypointFeatureAtPoint(event.point)) {
         return;
       }
@@ -1307,7 +1427,7 @@
       }
 
       if (appState.manualPointMode) {
-        placeManualDraftAt(event.lngLat, { openModalAfter: true });
+        placeManualDraftAt(event.lngLat, { openModalAfter: false });
         return;
       }
 
@@ -1425,6 +1545,7 @@
         const startedAt = new Date().toISOString();
         await putMeta(SESSION_KEY, { active: true, startedAt });
         appState.isTracking = true;
+        appState.isPaused = false;
         updateCurrentMarker(startPos.coords);
 
         const startPoint = normalizeTrackPoint(startPos.coords, startedAt);
@@ -1454,34 +1575,52 @@
       appState.trackWatchId = navigator.geolocation.watchPosition(handleTrackPosition, handleTrackError, getGeoOptions());
     }
 
+
     async function stopTracking() {
+      openModal('stopConfirmModal');
+    }
+
+    async function pauseTrackingForExport() {
+      closeActiveModal();
       if (!appState.isTracking) return;
       if (appState.trackWatchId != null) {
         navigator.geolocation.clearWatch(appState.trackWatchId);
         appState.trackWatchId = null;
       }
-      try {
-        const endPos = await getCurrentPositionPromise(getGeoOptions());
-        updateCurrentMarker(endPos.coords);
-        const endPoint = normalizeTrackPoint(endPos.coords, new Date().toISOString());
-        await addTrackPointToState(endPoint);
-        const endWaypoint = await buildWaypointFromCoords(endPos.coords, {
-          title: 'ゴール',
-          memo1: '地区踏査終了',
-          memo2: '',
-          tag: ''
-        });
-        await addWaypointToState(endWaypoint);
-      } catch (error) {
-        console.warn('終了地点の取得に失敗', error);
-        showToast('終了地点のGPS取得に失敗しました。直前の記録まで保存しています。');
-      }
       appState.isTracking = false;
+      appState.isPaused = true;
       deactivateManualPointMode({ preserveDraft: false, silent: true });
-      await putMeta(SESSION_KEY, { active: false, startedAt: (await getMeta(SESSION_KEY))?.startedAt || null, endedAt: new Date().toISOString() });
+      await putMeta(SESSION_KEY, { active: true, paused: true, startedAt: (await getMeta(SESSION_KEY))?.startedAt || new Date().toISOString() });
       await releaseWakeLock();
       renderState();
       openExportModal();
+    }
+
+    async function resumeTrackingAfterExport() {
+      closeActiveModal();
+      if (!appState.isPaused) return;
+      appState.isPaused = false;
+      appState.isTracking = true;
+      await putMeta(SESSION_KEY, { active: true, paused: false, startedAt: (await getMeta(SESSION_KEY))?.startedAt || new Date().toISOString() });
+      restartTrackingWatcher();
+      await requestWakeLock();
+      renderState();
+      showToast('地区踏査を再開しました。');
+    }
+
+    async function closeExportAndMaybeResume() {
+      closeActiveModal();
+      if (appState.isPaused) {
+        await resumeTrackingAfterExport();
+      }
+    }
+
+    async function discardTrackingFromModal() {
+      const ok = confirm('今回の踏査記録を破棄して終了します。よろしいですか？');
+      if (!ok) return;
+      closeActiveModal();
+      await clearSessionData();
+      showToast('記録を破棄しました。');
     }
 
     async function handleTrackPosition(position) {
@@ -1535,6 +1674,7 @@
         appState.pointDraft = {
           coords: pos.coords,
           photo: null,
+          photoDataUrl: '',
           thumbDataUrl: '',
           filename: '',
           mimeType: ''
@@ -1547,6 +1687,17 @@
         console.error(error);
         showToast('ポイント用の現在地取得に失敗しました。');
       }
+    }
+
+    function openPointModalFromManualDraft() {
+      if (!appState.pointDraft?.coords || appState.pointDraftSource !== 'manual') {
+        showToast('先に地図上へ任意地点を配置してください。');
+        return;
+      }
+      fillPointDraftUI({ keepInputs: true });
+      els.pointModalTitle.textContent = '任意地点ポイントを追加';
+      els.pointModalSub.textContent = '位置を確認してメモと写真を登録します';
+      openModal('pointModal');
     }
 
     function activateManualPointMode({ silent = false } = {}) {
@@ -1603,6 +1754,7 @@
         appState.pointDraft = {
           coords,
           photo: null,
+          photoDataUrl: '',
           thumbDataUrl: '',
           filename: '',
           mimeType: ''
@@ -1617,6 +1769,10 @@
         appState.draftMarker = new maplibregl.Marker({ element: el, draggable: true })
           .setLngLat([coords.longitude, coords.latitude])
           .addTo(appState.map);
+        el.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          openPointModalFromManualDraft();
+        });
         appState.draftMarker.on('dragend', () => {
           const ll = appState.draftMarker.getLngLat();
           appState.pointDraft.coords = {
@@ -1633,8 +1789,9 @@
 
       fillPointDraftUI({ keepInputs: Boolean(document.getElementById('pointModal')?.classList.contains('show')) });
       els.pointModalTitle.textContent = '任意地点ポイントを追加';
-      els.pointModalSub.textContent = '地図上で配置した地点にメモと写真を登録します';
+      els.pointModalSub.textContent = '位置を確認してメモと写真を登録します';
       if (openModalAfter) openModal('pointModal');
+      else showToast('任意地点を配置しました。ドラッグで調整し、「入力へ」から保存してください。', 3200);
     }
 
     function cancelPointModal() {
@@ -1669,6 +1826,7 @@
         showToast('写真を圧縮しています…');
         const compressed = await compressImageFile(file, { maxSize: 1600, quality: 0.78, thumbSize: 320 });
         appState.pointDraft.photo = compressed.blob;
+        appState.pointDraft.photoDataUrl = await blobToDataURL(compressed.blob);
         appState.pointDraft.thumbDataUrl = compressed.thumbDataUrl;
         appState.pointDraft.filename = compressed.filename;
         appState.pointDraft.mimeType = compressed.mimeType;
@@ -1688,6 +1846,7 @@
     function clearPointPhotoDraft(silent = false) {
       if (appState.pointDraft) {
         appState.pointDraft.photo = null;
+        appState.pointDraft.photoDataUrl = '';
         appState.pointDraft.thumbDataUrl = '';
         appState.pointDraft.filename = '';
         appState.pointDraft.mimeType = '';
@@ -1701,6 +1860,8 @@
 
     async function savePointDraft() {
       if (!appState.pointDraft?.coords) return;
+      if (els.savePointBtn.disabled) return;
+
       const coords = appState.pointDraft.coords;
       const title = els.pointTitleInput.value.trim();
       const memo1 = els.pointMemo1Input.value.trim();
@@ -1710,33 +1871,59 @@
         showToast('タイトル・メモ・写真のいずれかを入力してください。');
         return;
       }
-      let photoMeta = null;
-      if (appState.pointDraft.photo) {
-        const photoId = crypto.randomUUID();
-        photoMeta = {
-          id: photoId,
-          filename: appState.pointDraft.filename || `${getNowStamp()}_photo.webp`,
-          mimeType: appState.pointDraft.mimeType || 'image/webp',
-          thumbDataUrl: appState.pointDraft.thumbDataUrl || '',
-          size: appState.pointDraft.photo.size
-        };
-        await putPhoto({ ...photoMeta, blob: appState.pointDraft.photo });
+
+      const originalBtnText = els.savePointBtn.textContent;
+      els.savePointBtn.disabled = true;
+      els.savePointBtn.textContent = '保存中…';
+
+      try {
+        let photoMeta = null;
+        if (appState.pointDraft.photo) {
+          const photoId = (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function')
+            ? globalThis.crypto.randomUUID()
+            : `photo_${getNowStamp()}_${Math.random().toString(36).slice(2, 10)}`;
+          photoMeta = {
+            id: photoId,
+            filename: appState.pointDraft.filename || `${getNowStamp()}_photo.webp`,
+            mimeType: appState.pointDraft.mimeType || 'image/webp',
+            thumbDataUrl: appState.pointDraft.thumbDataUrl || '',
+            size: appState.pointDraft.photo.size
+          };
+
+          try {
+            await putPhoto({ ...photoMeta, dataUrl: appState.pointDraft.photoDataUrl || await blobToDataURL(appState.pointDraft.photo) });
+          } catch (photoError) {
+            console.error('photo save failed', photoError);
+            const keepPointOnly = confirm('画像の保存に失敗しました。画像なしでポイントだけ保存しますか？');
+            if (!keepPointOnly) {
+              throw photoError;
+            }
+            photoMeta = null;
+          }
+        }
+
+        const waypoint = await buildWaypointFromCoords(coords, {
+          title: title || tag || 'ポイント',
+          memo1,
+          memo2,
+          tag,
+          photoMeta
+        });
+        await addWaypointToState(waypoint);
+        closeActiveModal();
+        if (appState.pointDraftSource === 'manual') {
+          deactivateManualPointMode({ preserveDraft: false, silent: true });
+        } else {
+          appState.pointDraft = null;
+        }
+        showToast(photoMeta ? 'ポイントを保存しました。' : 'ポイントを保存しました。');
+      } catch (error) {
+        console.error('savePointDraft failed', error);
+        showToast(`保存に失敗しました: ${error?.message || '画像または端末内保存のエラー'}`, 4200);
+      } finally {
+        els.savePointBtn.disabled = false;
+        els.savePointBtn.textContent = originalBtnText;
       }
-      const waypoint = await buildWaypointFromCoords(coords, {
-        title: title || tag || 'ポイント',
-        memo1,
-        memo2,
-        tag,
-        photoMeta
-      });
-      await addWaypointToState(waypoint);
-      closeActiveModal();
-      if (appState.pointDraftSource === 'manual') {
-        deactivateManualPointMode({ preserveDraft: false, silent: true });
-      } else {
-        appState.pointDraft = null;
-      }
-      showToast('ポイントを保存しました。');
     }
 
     async function buildWaypointFromCoords(coords, { title, memo1, memo2, tag, photoMeta = null }) {
@@ -1832,6 +2019,12 @@
       }
       setWakeStatus('bad', '画面保持なし');
       renderState();
+    }
+
+    async function handleResumeSignals() {
+      if ((appState.isTracking || appState.isPaused) && document.visibilityState === 'visible' && !appState.wakeLock) {
+        await requestWakeLock();
+      }
     }
 
     async function handleVisibilityChange() {
@@ -1946,7 +2139,9 @@
       for (const waypoint of appState.waypoints) {
         if (!waypoint.photoId || !waypoint.photoFilename) continue;
         const photo = await getPhoto(waypoint.photoId);
-        if (photo?.blob) {
+        if (photo?.dataUrl) {
+          photoFolder.file(waypoint.photoFilename, dataUrlToBlob(photo.dataUrl));
+        } else if (photo?.blob) {
           photoFolder.file(waypoint.photoFilename, photo.blob);
         }
       }
@@ -1988,7 +2183,8 @@
       appState.trackPoints = await getAll(STORE_TRACKS);
       appState.waypoints = await getAll(STORE_WAYPOINTS);
       const session = await getMeta(SESSION_KEY);
-      appState.isTracking = Boolean(session?.active);
+      appState.isTracking = Boolean(session?.active) && !Boolean(session?.paused);
+      appState.isPaused = Boolean(session?.paused);
       appState.lastTrackPoint = appState.trackPoints.length ? appState.trackPoints[appState.trackPoints.length - 1] : null;
       rebuildSegmentsFromTrack();
       refreshMapSources();
@@ -1996,6 +2192,8 @@
         restartTrackingWatcher();
         await requestWakeLock();
         showToast('未終了の踏査記録を復元しました。');
+      } else if (appState.isPaused) {
+        showToast('一時停止中の踏査記録を復元しました。再開できます。');
       }
     }
 
@@ -2016,20 +2214,20 @@
       els.styleSelect.value = appState.settings.mapStyle;
       els.gpsModeSelect.value = appState.settings.gpsMode;
 
-      els.trackDockBtn.classList.toggle('active', appState.isTracking);
-      els.trackDockBtn.querySelector('.dock-label').textContent = appState.isTracking ? '踏査終了' : '踏査開始';
-      els.trackDockBtn.querySelector('.dock-sub').textContent = appState.isTracking ? '記録停止' : '位置記録';
+      els.trackDockBtn.classList.toggle('active', appState.isTracking || appState.isPaused);
+      els.trackDockBtn.querySelector('.dock-label').textContent = appState.isTracking ? '踏査終了' : (appState.isPaused ? '踏査再開' : '踏査開始');
+      els.trackDockBtn.querySelector('.dock-sub').textContent = appState.isTracking ? '記録停止' : (appState.isPaused ? '続きから再開' : '位置記録');
       els.pointDockBtn.disabled = !appState.isTracking;
       els.pointDockBtn.classList.toggle('active', appState.manualPointMode);
       els.exportDockBtn.disabled = !(appState.trackPoints.length || appState.waypoints.length);
 
       if (!appState._gpsStatus) setGpsStatus('bad', 'GPS待機');
-      if (!appState._trackStatus) setTrackStatus(appState.isTracking ? 'ok' : 'bad', appState.isTracking ? '記録中' : '未記録');
+      if (!appState._trackStatus) setTrackStatus(appState.isTracking ? 'ok' : (appState.isPaused ? 'warn' : 'bad'), appState.isTracking ? '記録中' : (appState.isPaused ? '一時停止中' : '未記録'));
       if (!appState._wakeStatus) setWakeStatus('bad', '画面保持なし');
 
       const manualPointCount = appState.waypoints.filter(w => !['スタート', 'ゴール'].includes(w.title)).length;
-      setTrackStatus(appState.isTracking ? 'ok' : 'bad', appState.isTracking ? `記録中 ${manualPointCount} 点登録` : `${manualPointCount} 点登録`);
-      els.titleSub.textContent = appState.manualPointMode ? '任意地点追加モード' : (appState.isTracking ? `記録中 / 距離 ${formatDistance(getTrackDistanceMeters(appState.trackPoints))}` : 'スマホ対応・地区踏査モード');
+      setTrackStatus(appState.isTracking ? 'ok' : (appState.isPaused ? 'warn' : 'bad'), appState.isTracking ? `記録中 ${manualPointCount} 点登録` : (appState.isPaused ? `一時停止中 ${manualPointCount} 点登録` : `${manualPointCount} 点登録`));
+      els.titleSub.textContent = appState.manualPointMode ? '任意地点追加モード' : (appState.isTracking ? `記録中 / 距離 ${formatDistance(getTrackDistanceMeters(appState.trackPoints))}` : (appState.isPaused ? `一時停止中 / 距離 ${formatDistance(getTrackDistanceMeters(appState.trackPoints))}` : 'スマホ対応・地区踏査モード'));
 
       applyStatusChip(els.gpsDot, els.gpsText, appState._gpsStatus);
       applyStatusChip(els.trackDot, els.trackText, appState._trackStatus);
@@ -2289,6 +2487,16 @@
         reader.onerror = reject;
         reader.readAsDataURL(blob);
       });
+    }
+
+    function dataUrlToBlob(dataUrl) {
+      const parts = String(dataUrl).split(',');
+      const mime = (parts[0].match(/data:(.*?);base64/) || [])[1] || 'application/octet-stream';
+      const binary = atob(parts[1] || '');
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+      return new Blob([bytes], { type: mime });
     }
 
     function loadImage(src) {
