@@ -2308,40 +2308,69 @@
         features: waypoints.map((wp) => ({
           type: 'Feature',
           geometry: { type: 'Point', coordinates: [wp.lng, wp.lat, wp.ele ?? 0] },
-          properties: {
-            title: wp.title || '',
-            memo1: wp.memo1 || '',
-            memo2: wp.memo2 || '',
-            tag: wp.tag || '',
-            recordedAt: wp.recordedAt || '',
-            ele: wp.ele ?? null,
-            accuracy: wp.accuracy ?? null,
-            hasPhoto: Boolean(wp.hasPhoto),
-            photoId: wp.photoId || '',
-            photoFilename: wp.photoFilename || '',
-            photoPath: wp.photoFilename ? `photos/${wp.photoFilename}` : '',
-            photoThumbDataUrl: includeThumb ? (wp.photoThumbDataUrl || '') : ''
-          }
+          properties: buildWaypointExportProperties(wp, { includeThumb })
         }))
       };
     }
 
     function generateGPX(trackPoints, waypoints) {
-      const trkpts = trackPoints.map(tp => `      <trkpt lat="${tp.lat}" lon="${tp.lng}">\n        ${tp.ele != null ? `<ele>${tp.ele}</ele>` : ''}\n        <time>${escapeXml(tp.recordedAt)}</time>\n      </trkpt>`).join('\n');
+      const trackMetrics = computeTrackExportMetrics(trackPoints);
+      const trkpts = trackMetrics.map(tp => `      <trkpt lat="${tp.lat}" lon="${tp.lng}">
+        ${tp.ele != null ? `<ele>${tp.ele}</ele>` : ''}
+        <time>${escapeXml(tp.time_jst || toJstIsoString(tp.recordedAt))}</time>
+        <extensions>
+${buildGpxTrackExtensions(tp)}
+        </extensions>
+      </trkpt>`).join('\n');
+
       const wpts = waypoints.map(wp => {
         const linkBlock = wp.photoFilename ? `\n    <link href="${escapeXml(`photos/${wp.photoFilename}`)}"><text>${escapeXml(wp.photoFilename)}</text><type>${escapeXml(wp.photoMimeType || 'image/webp')}</type></link>` : '';
-        const descParts = [wp.memo1, wp.memo2, wp.tag].filter(Boolean).join(' / ');
-        return `  <wpt lat="${wp.lat}" lon="${wp.lng}">\n    ${wp.ele != null ? `<ele>${wp.ele}</ele>` : ''}\n    <time>${escapeXml(wp.recordedAt)}</time>\n    <name>${escapeXml(wp.title || '')}</name>\n    <cmt>${escapeXml(wp.memo1 || '')}</cmt>\n    <desc>${escapeXml(descParts)}</desc>${linkBlock}\n  </wpt>`;
+        return `  <wpt lat="${wp.lat}" lon="${wp.lng}">
+    ${wp.ele != null ? `<ele>${wp.ele}</ele>` : ''}
+    <time>${escapeXml(toJstIsoString(wp.recordedAt))}</time>
+    <name>${escapeXml(wp.title || '')}</name>
+    <cmt>${escapeXml(wp.memo1 || '')}</cmt>
+    <desc>${escapeXml(wp.memo2 || '')}</desc>${linkBlock}
+    <extensions>
+${buildGpxWaypointExtensions(wp)}
+    </extensions>
+  </wpt>`;
       }).join('\n');
-      return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1">\n  <metadata>\n    <name>Find LngLat Track</name>\n    <time>${new Date().toISOString()}</time>\n  </metadata>\n  <trk>\n    <name>地区踏査トラック</name>\n    <trkseg>\n${trkpts}\n    </trkseg>\n  </trk>\n${wpts}\n</gpx>`;
+
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1" xmlns:fll="https://gisphn.github.io/find-lnglat/extensions/1.0">
+  <metadata>
+    <name>Find LngLat Track</name>
+    <time>${escapeXml(toJstIsoString(new Date()))}</time>
+  </metadata>
+  <trk>
+    <name>地区踏査トラック</name>
+    <trkseg>
+${trkpts}
+    </trkseg>
+  </trk>
+${wpts}
+</gpx>`;
     }
 
     function generateWaypointOnlyGPX(waypoints) {
       const wpts = waypoints.map(wp => {
         const linkBlock = wp.photoFilename ? `\n    <link href="${escapeXml(`photos/${wp.photoFilename}`)}"><text>${escapeXml(wp.photoFilename)}</text><type>${escapeXml(wp.photoMimeType || 'image/webp')}</type></link>` : '';
-        return `  <wpt lat="${wp.lat}" lon="${wp.lng}">\n    ${wp.ele != null ? `<ele>${wp.ele}</ele>` : ''}\n    <time>${escapeXml(wp.recordedAt)}</time>\n    <name>${escapeXml(wp.title || '')}</name>\n    <cmt>${escapeXml(wp.memo1 || '')}</cmt>\n    <desc>${escapeXml((wp.memo2 || '') + (wp.tag ? ` / ${wp.tag}` : ''))}</desc>${linkBlock}\n  </wpt>`;
+        return `  <wpt lat="${wp.lat}" lon="${wp.lng}">
+    ${wp.ele != null ? `<ele>${wp.ele}</ele>` : ''}
+    <time>${escapeXml(toJstIsoString(wp.recordedAt))}</time>
+    <name>${escapeXml(wp.title || '')}</name>
+    <cmt>${escapeXml(wp.memo1 || '')}</cmt>
+    <desc>${escapeXml(wp.memo2 || '')}</desc>${linkBlock}
+    <extensions>
+${buildGpxWaypointExtensions(wp)}
+    </extensions>
+  </wpt>`;
       }).join('\n');
-      return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1">\n${wpts}\n</gpx>`;
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1" xmlns:fll="https://gisphn.github.io/find-lnglat/extensions/1.0">
+${wpts}
+</gpx>`;
     }
 
     function buildQgisReadme() {
@@ -2349,18 +2378,20 @@
         'Find LngLat 調査セットZIP',
         '',
         '内容:',
-        '1) track.gpx  : トラックとポイント',
-        '2) points.geojson : 写真パス付きポイント',
-        '3) photos/ : 圧縮済み写真',
+        '1) track.gpx  : トラック点（time_jst / cumulative_km / speed_mps / speed_kmh を拡張に保持）',
+        '2) points.gpx : ポイント（title / tag / memo1 / memo2 / lat / lng / time_jst を拡張に保持）',
+        '3) points.geojson : 写真パス付きポイント',
+        '4) photos/ : 圧縮済み写真',
         '',
         'QGISでの基本手順:',
         '1. ZIPを展開する',
         '2. points.geojson を QGIS に追加する',
-        '3. レイヤプロパティ > 属性フォーム > photoPath フィールドを選び、Widget Type を Attachment に設定する',
+        '3. レイヤプロパティ > 属性フォーム > photo_path フィールドを選び、Widget Type を Attachment に設定する',
         '4. 必要に応じて相対パスで扱うため、展開フォルダ内に QGIS プロジェクトを保存する',
         '',
-        'HTML Map Tip 例:',
-        '<div><b>[% "title" %]</b></div><div>[% "memo1" %]</div><div>[% "memo2" %]</div><img src="[% "photoPath" %]" width="240">',
+        '主な属性:',
+        '- points.geojson: title, tag, memo1, memo2, lat, lng, ele, accuracy, time_jst, photo_path',
+        '- track.gpx extensions: time_jst, cumulative_km, speed_mps, speed_kmh, accuracy',
         '',
         '備考:',
         '- GPXは標準仕様上、写真バイナリの直接埋め込みには向きません。',
@@ -2426,6 +2457,103 @@
     function escapeXml(value) {
       return escapeHtml(value);
     }
+
+
+    function toJstIsoString(value) {
+      const date = value instanceof Date ? value : new Date(value);
+      if (Number.isNaN(date.getTime())) return '';
+      const jst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+      const yyyy = jst.getUTCFullYear();
+      const mm = String(jst.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(jst.getUTCDate()).padStart(2, '0');
+      const hh = String(jst.getUTCHours()).padStart(2, '0');
+      const mi = String(jst.getUTCMinutes()).padStart(2, '0');
+      const ss = String(jst.getUTCSeconds()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}T${hh}:${mi}:${ss}+09:00`;
+    }
+
+    function roundTo(value, digits = 1) {
+      if (!Number.isFinite(value)) return null;
+      const factor = 10 ** digits;
+      return Math.round(value * factor) / factor;
+    }
+
+    function computeTrackExportMetrics(trackPoints) {
+      let cumulativeMeters = 0;
+      return trackPoints.map((tp, index) => {
+        if (index > 0) {
+          const prev = trackPoints[index - 1];
+          cumulativeMeters += haversine(prev.lat, prev.lng, tp.lat, tp.lng);
+        }
+        const dtSeconds = index > 0
+          ? Math.max(0, (new Date(tp.recordedAt) - new Date(trackPoints[index - 1].recordedAt)) / 1000)
+          : 0;
+        const calcSpeedMps = (index > 0 && dtSeconds > 0)
+          ? haversine(trackPoints[index - 1].lat, trackPoints[index - 1].lng, tp.lat, tp.lng) / dtSeconds
+          : null;
+        const speedMps = Number.isFinite(tp.speed) ? Number(tp.speed) : calcSpeedMps;
+        const speedKmh = Number.isFinite(speedMps) ? speedMps * 3.6 : null;
+        return {
+          ...tp,
+          lat_value: Number(tp.lat),
+          lng_value: Number(tp.lng),
+          time_jst: toJstIsoString(tp.recordedAt),
+          cumulative_km: roundTo(cumulativeMeters / 1000, 1),
+          speed_mps: roundTo(speedMps, 2),
+          speed_kmh: roundTo(speedKmh, 1)
+        };
+      });
+    }
+
+    function buildWaypointExportProperties(wp, { includeThumb = false } = {}) {
+      return {
+        title: wp.title || '',
+        tag: wp.tag || '',
+        memo1: wp.memo1 || '',
+        memo2: wp.memo2 || '',
+        lat: Number(wp.lat),
+        lng: Number(wp.lng),
+        ele: wp.ele ?? null,
+        accuracy: wp.accuracy ?? null,
+        recorded_at: wp.recordedAt || '',
+        time_jst: toJstIsoString(wp.recordedAt),
+        has_photo: Boolean(wp.hasPhoto),
+        photo_id: wp.photoId || '',
+        photo_filename: wp.photoFilename || '',
+        photo_path: wp.photoFilename ? `photos/${wp.photoFilename}` : '',
+        photo_thumb: includeThumb ? (wp.photoThumbDataUrl || '') : '',
+        elevation_source: wp.elevationSource || ''
+      };
+    }
+
+    function buildGpxWaypointExtensions(wp) {
+      const ext = [
+        ['title', wp.title || ''],
+        ['tag', wp.tag || ''],
+        ['memo1', wp.memo1 || ''],
+        ['memo2', wp.memo2 || ''],
+        ['lat', Number.isFinite(wp.lat) ? Number(wp.lat).toFixed(6) : ''],
+        ['lng', Number.isFinite(wp.lng) ? Number(wp.lng).toFixed(6) : ''],
+        ['time_jst', toJstIsoString(wp.recordedAt)],
+        ['accuracy', Number.isFinite(wp.accuracy) ? String(roundTo(wp.accuracy, 1)) : ''],
+        ['elevation_source', wp.elevationSource || '']
+      ];
+      return ext.map(([k,v]) => `      <fll:${k}>${escapeXml(v ?? '')}</fll:${k}>`).join('\n');
+    }
+
+    function buildGpxTrackExtensions(tp) {
+      const ext = [
+        ['lat', Number.isFinite(tp.lat_value) ? tp.lat_value.toFixed(6) : ''],
+        ['lng', Number.isFinite(tp.lng_value) ? tp.lng_value.toFixed(6) : ''],
+        ['time_jst', tp.time_jst || ''],
+        ['cumulative_km', Number.isFinite(tp.cumulative_km) ? tp.cumulative_km.toFixed(1) : ''],
+        ['speed_mps', Number.isFinite(tp.speed_mps) ? tp.speed_mps.toFixed(2) : ''],
+        ['speed_kmh', Number.isFinite(tp.speed_kmh) ? tp.speed_kmh.toFixed(1) : ''],
+        ['accuracy', Number.isFinite(tp.accuracy) ? String(roundTo(tp.accuracy, 1)) : '']
+      ];
+      return ext.map(([k,v]) => `          <fll:${k}>${escapeXml(v ?? '')}</fll:${k}>`).join('\n');
+    }
+
 
     async function compressImageFile(file, { maxSize = 1600, quality = 0.78, thumbSize = 320 } = {}) {
       const dataUrl = await fileToDataURL(file);
