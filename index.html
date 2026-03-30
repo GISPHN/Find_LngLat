@@ -647,13 +647,13 @@
 
     .maplibregl-ctrl-bottom-left,
     .maplibregl-ctrl-bottom-right {
-      bottom: calc(var(--safe-bottom) + 0px) !important;
+      bottom: calc(var(--safe-bottom) - 2px) !important;
       z-index: 70 !important;
       pointer-events: auto !important;
     }
 
     .maplibregl-ctrl-bottom-left {
-      left: calc(env(safe-area-inset-left, 0px) + 14px) !important;
+      left: calc(env(safe-area-inset-left, 0px) + 10px) !important;
     }
 
     .maplibregl-ctrl-attrib {
