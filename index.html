@@ -643,6 +643,24 @@
         border-radius: 28px;
       }
     }
+  
+/* 地図の出典表記を右下の見える位置へ移動 */
+.maplibregl-ctrl-bottom-right {
+  right: 14px !important;
+  bottom: 185px !important;
+}
+
+/* 出典表記の見た目を少し読みやすくする */
+.maplibregl-ctrl-attrib {
+  margin: 0 !important;
+  padding: 2px 6px !important;
+  border-radius: 8px !important;
+  background: rgba(255,255,255,0.92) !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12) !important;
+}
+
   </style>
 </head>
 <body>
@@ -1953,7 +1971,7 @@
       const zip = new JSZip();
       const stamp = getNowStamp();
       zip.file('track.gpx', generateGPX(appState.trackPoints, appState.waypoints));
-      zip.file('points.geojson', JSON.stringify(buildWaypointsExportGeoJSON(appState.waypoints), null, 2));
+      zip.file('points.geojson', JSON.stringify(buildWaypointsGeoJSON(appState.waypoints, { includeThumb: true }), null, 2));
       zip.file('points.gpx', generateWaypointOnlyGPX(appState.waypoints));
       zip.file('README_QGIS.txt', buildQgisReadme());
       const photoFolder = zip.folder('photos');
@@ -2109,92 +2127,6 @@
       return new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, options));
     }
 
-    function toJstIsoString(value) {
-      const date = value instanceof Date ? value : new Date(value);
-      const jstMillis = date.getTime() + (9 * 60 * 60 * 1000);
-      const jst = new Date(jstMillis);
-      const yyyy = jst.getUTCFullYear();
-      const MM = String(jst.getUTCMonth() + 1).padStart(2, '0');
-      const dd = String(jst.getUTCDate()).padStart(2, '0');
-      const hh = String(jst.getUTCHours()).padStart(2, '0');
-      const mm = String(jst.getUTCMinutes()).padStart(2, '0');
-      const ss = String(jst.getUTCSeconds()).padStart(2, '0');
-      return `${yyyy}-${MM}-${dd}T${hh}:${mm}:${ss}+09:00`;
-    }
-
-    function roundMaybe(value, digits = 6) {
-      return Number.isFinite(Number(value)) ? Number(Number(value).toFixed(digits)) : null;
-    }
-
-    function computeTrackExportRows(trackPoints) {
-      const rows = [];
-      let cumulativeMeters = 0;
-      for (let i = 0; i < trackPoints.length; i++) {
-        const tp = trackPoints[i];
-        const prev = i > 0 ? trackPoints[i - 1] : null;
-        let segmentMeters = 0;
-        let seconds = 0;
-        if (prev) {
-          segmentMeters = haversine(prev.lat, prev.lng, tp.lat, tp.lng);
-          cumulativeMeters += segmentMeters;
-          seconds = Math.max(0, (new Date(tp.recordedAt).getTime() - new Date(prev.recordedAt).getTime()) / 1000);
-        }
-        let speedMps = Number.isFinite(tp.speed) ? Number(tp.speed) : null;
-        if (!Number.isFinite(speedMps) && prev && seconds > 0) {
-          speedMps = segmentMeters / seconds;
-        }
-        rows.push({
-          ...tp,
-          lat: roundMaybe(tp.lat, 8),
-          lng: roundMaybe(tp.lng, 8),
-          ele: Number.isFinite(tp.ele) ? Number(tp.ele) : null,
-          accuracy: Number.isFinite(tp.accuracy) ? Number(tp.accuracy) : null,
-          timeJst: toJstIsoString(tp.recordedAt),
-          cumulativeKm: Number((cumulativeMeters / 1000).toFixed(1)),
-          speedMps: Number.isFinite(speedMps) ? Number(speedMps.toFixed(3)) : null,
-          speedKmh: Number.isFinite(speedMps) ? Number((speedMps * 3.6).toFixed(1)) : null
-        });
-      }
-      return rows;
-    }
-
-    function computeWaypointExportRows(waypoints) {
-      return waypoints.map((wp) => ({
-        ...wp,
-        lat: roundMaybe(wp.lat, 8),
-        lng: roundMaybe(wp.lng, 8),
-        ele: Number.isFinite(wp.ele) ? Number(wp.ele) : null,
-        accuracy: Number.isFinite(wp.accuracy) ? Number(wp.accuracy) : null,
-        timeJst: toJstIsoString(wp.recordedAt)
-      }));
-    }
-
-    function buildWaypointsExportGeoJSON(waypoints) {
-      const exportRows = computeWaypointExportRows(waypoints);
-      return {
-        type: 'FeatureCollection',
-        features: exportRows.map((wp) => ({
-          type: 'Feature',
-          geometry: { type: 'Point', coordinates: [wp.lng, wp.lat, wp.ele ?? 0] },
-          properties: {
-            title: wp.title || '',
-            tag: wp.tag || '',
-            memo1: wp.memo1 || '',
-            memo2: wp.memo2 || '',
-            recorded_at_utc: wp.recordedAt || '',
-            time_jst: wp.timeJst || '',
-            lat: wp.lat,
-            lng: wp.lng,
-            ele: wp.ele,
-            accuracy: wp.accuracy,
-            has_photo: Boolean(wp.hasPhoto),
-            photo_path: wp.photoFilename ? `photos/${wp.photoFilename}` : '',
-            elevation_source: wp.elevationSource || ''
-          }
-        }))
-      };
-    }
-
     function renderWaypointPopup(props) {
       const lines = [];
       if (props.title) lines.push(`<div><strong>${escapeHtml(props.title)}</strong></div>`);
@@ -2233,93 +2165,21 @@
     }
 
     function generateGPX(trackPoints, waypoints) {
-      const trackRows = computeTrackExportRows(trackPoints);
-      const waypointRows = computeWaypointExportRows(waypoints);
-      const trkpts = trackRows.map(tp => {
-        const ext = [
-          `<fll:lat>${tp.lat}</fll:lat>`,
-          `<fll:lng>${tp.lng}</fll:lng>`,
-          `<fll:time_jst>${escapeXml(tp.timeJst)}</fll:time_jst>`,
-          `<fll:cumulative_km>${tp.cumulativeKm}</fll:cumulative_km>`,
-          tp.speedMps != null ? `<fll:speed_mps>${tp.speedMps}</fll:speed_mps>` : '',
-          tp.speedKmh != null ? `<fll:speed_kmh>${tp.speedKmh}</fll:speed_kmh>` : '',
-          tp.accuracy != null ? `<fll:accuracy>${tp.accuracy}</fll:accuracy>` : ''
-        ].filter(Boolean).join('');
-        return `      <trkpt lat="${tp.lat}" lon="${tp.lng}">
-        ${tp.ele != null ? `<ele>${tp.ele}</ele>` : ''}
-        <time>${escapeXml(tp.timeJst)}</time>
-        <extensions>${ext}</extensions>
-      </trkpt>`;
-      }).join('
-');
-      const wpts = waypointRows.map(wp => {
-        const linkBlock = wp.photoFilename ? `
-    <link href="${escapeXml(`photos/${wp.photoFilename}`)}"><text>${escapeXml(wp.photoFilename)}</text><type>${escapeXml(wp.photoMimeType || 'image/webp')}</type></link>` : '';
-        const ext = [
-          `<fll:title>${escapeXml(wp.title || '')}</fll:title>`,
-          `<fll:tag>${escapeXml(wp.tag || '')}</fll:tag>`,
-          `<fll:memo1>${escapeXml(wp.memo1 || '')}</fll:memo1>`,
-          `<fll:memo2>${escapeXml(wp.memo2 || '')}</fll:memo2>`,
-          `<fll:lat>${wp.lat}</fll:lat>`,
-          `<fll:lng>${wp.lng}</fll:lng>`,
-          `<fll:time_jst>${escapeXml(wp.timeJst)}</fll:time_jst>`,
-          wp.accuracy != null ? `<fll:accuracy>${wp.accuracy}</fll:accuracy>` : ''
-        ].filter(Boolean).join('');
-        return `  <wpt lat="${wp.lat}" lon="${wp.lng}">
-    ${wp.ele != null ? `<ele>${wp.ele}</ele>` : ''}
-    <time>${escapeXml(wp.timeJst)}</time>
-    <name>${escapeXml(wp.title || '')}</name>
-    <cmt>${escapeXml(wp.memo1 || '')}</cmt>
-    <desc>${escapeXml(wp.memo2 || '')}</desc>${linkBlock}
-    <extensions>${ext}</extensions>
-  </wpt>`;
-      }).join('
-');
-      return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1" xmlns:fll="https://gisphn.github.io/find-lnglat/extensions/1.0">
-  <metadata>
-    <name>Find LngLat Track</name>
-    <time>${escapeXml(toJstIsoString(new Date()))}</time>
-  </metadata>
-  <trk>
-    <name>地区踏査トラック</name>
-    <trkseg>
-${trkpts}
-    </trkseg>
-  </trk>
-${wpts}
-</gpx>`;
+      const trkpts = trackPoints.map(tp => `      <trkpt lat="${tp.lat}" lon="${tp.lng}">\n        ${tp.ele != null ? `<ele>${tp.ele}</ele>` : ''}\n        <time>${escapeXml(tp.recordedAt)}</time>\n      </trkpt>`).join('\n');
+      const wpts = waypoints.map(wp => {
+        const linkBlock = wp.photoFilename ? `\n    <link href="${escapeXml(`photos/${wp.photoFilename}`)}"><text>${escapeXml(wp.photoFilename)}</text><type>${escapeXml(wp.photoMimeType || 'image/webp')}</type></link>` : '';
+        const descParts = [wp.memo1, wp.memo2, wp.tag].filter(Boolean).join(' / ');
+        return `  <wpt lat="${wp.lat}" lon="${wp.lng}">\n    ${wp.ele != null ? `<ele>${wp.ele}</ele>` : ''}\n    <time>${escapeXml(wp.recordedAt)}</time>\n    <name>${escapeXml(wp.title || '')}</name>\n    <cmt>${escapeXml(wp.memo1 || '')}</cmt>\n    <desc>${escapeXml(descParts)}</desc>${linkBlock}\n  </wpt>`;
+      }).join('\n');
+      return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1">\n  <metadata>\n    <name>Find LngLat Track</name>\n    <time>${new Date().toISOString()}</time>\n  </metadata>\n  <trk>\n    <name>地区踏査トラック</name>\n    <trkseg>\n${trkpts}\n    </trkseg>\n  </trk>\n${wpts}\n</gpx>`;
     }
 
     function generateWaypointOnlyGPX(waypoints) {
-      const waypointRows = computeWaypointExportRows(waypoints);
-      const wpts = waypointRows.map(wp => {
-        const linkBlock = wp.photoFilename ? `
-    <link href="${escapeXml(`photos/${wp.photoFilename}`)}"><text>${escapeXml(wp.photoFilename)}</text><type>${escapeXml(wp.photoMimeType || 'image/webp')}</type></link>` : '';
-        const ext = [
-          `<fll:title>${escapeXml(wp.title || '')}</fll:title>`,
-          `<fll:tag>${escapeXml(wp.tag || '')}</fll:tag>`,
-          `<fll:memo1>${escapeXml(wp.memo1 || '')}</fll:memo1>`,
-          `<fll:memo2>${escapeXml(wp.memo2 || '')}</fll:memo2>`,
-          `<fll:lat>${wp.lat}</fll:lat>`,
-          `<fll:lng>${wp.lng}</fll:lng>`,
-          `<fll:time_jst>${escapeXml(wp.timeJst)}</fll:time_jst>`,
-          wp.accuracy != null ? `<fll:accuracy>${wp.accuracy}</fll:accuracy>` : ''
-        ].filter(Boolean).join('');
-        return `  <wpt lat="${wp.lat}" lon="${wp.lng}">
-    ${wp.ele != null ? `<ele>${wp.ele}</ele>` : ''}
-    <time>${escapeXml(wp.timeJst)}</time>
-    <name>${escapeXml(wp.title || '')}</name>
-    <cmt>${escapeXml(wp.memo1 || '')}</cmt>
-    <desc>${escapeXml(wp.memo2 || '')}</desc>${linkBlock}
-    <extensions>${ext}</extensions>
-  </wpt>`;
-      }).join('
-');
-      return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1" xmlns:fll="https://gisphn.github.io/find-lnglat/extensions/1.0">
-${wpts}
-</gpx>`;
+      const wpts = waypoints.map(wp => {
+        const linkBlock = wp.photoFilename ? `\n    <link href="${escapeXml(`photos/${wp.photoFilename}`)}"><text>${escapeXml(wp.photoFilename)}</text><type>${escapeXml(wp.photoMimeType || 'image/webp')}</type></link>` : '';
+        return `  <wpt lat="${wp.lat}" lon="${wp.lng}">\n    ${wp.ele != null ? `<ele>${wp.ele}</ele>` : ''}\n    <time>${escapeXml(wp.recordedAt)}</time>\n    <name>${escapeXml(wp.title || '')}</name>\n    <cmt>${escapeXml(wp.memo1 || '')}</cmt>\n    <desc>${escapeXml((wp.memo2 || '') + (wp.tag ? ` / ${wp.tag}` : ''))}</desc>${linkBlock}\n  </wpt>`;
+      }).join('\n');
+      return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1">\n${wpts}\n</gpx>`;
     }
 
     function buildQgisReadme() {
