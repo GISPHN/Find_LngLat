@@ -926,10 +926,10 @@
             <div class="metric"><div class="label">推定距離</div><div id="exportDistance" class="value">0 m</div></div>
           </div>
           <div class="hint">
-            GPX はトラックとポイントを含みます。写真はGPX内に埋め込まず、ZIP出力で GeoJSON と写真ファイルを一緒に書き出します。
+            track.gpx には track_points と track waypoints を含みます。写真は GPX に埋め込まず、ZIP出力では photos フォルダにまとめます。
           </div>
           <div class="inline-actions">
-            <button id="downloadGpxBtn" class="btn-soft" type="button">GPXを保存</button>
+            <button id="downloadGpxBtn" class="btn-soft" type="button">track.gpxを保存</button>
             <button id="downloadZipBtn" class="btn-primary" type="button">ZIPを保存</button>
           </div>
           <div class="hint">
@@ -1084,7 +1084,7 @@
         'pointModeModal','closePointModeModalBtn','pointCurrentBtn','pointManualBtn','manualModeBanner','manualModeEditBtn','manualModeCancelBtn','pointModal','closePointModalBtn','cancelPointBtn','savePointBtn','capturePhotoBtn','removePhotoBtn',
         'photoInput','photoPreview','photoMeta','pointTitleInput','pointTagSelect','pointMemo1Input','pointMemo2Input',
         'pointModalTitle','pointModalSub','pointLat','pointLng','pointEle','pointAcc','exportModal','closeExportModalBtn','downloadGpxBtn',
-        'downloadZipBtn','downloadJsonBtn','finishAndClearBtn','exportTrackCount','exportPointCount',
+        'downloadZipBtn','finishAndClearBtn','exportTrackCount','exportPointCount',
         'exportPhotoCount','exportDistance','stopConfirmModal','closeStopConfirmModalBtn','continueTrackingBtn','pauseExportBtn','discardTrackingBtn','helpModal','closeHelpModalBtn','installHintBtn','toastWrap'
       ].forEach(id => els[id] = document.getElementById(id));
     }
@@ -2093,20 +2093,11 @@
         return;
       }
       const content = generateGPX(appState.trackPoints, appState.waypoints);
+      validateGeneratedGpx(content, appState.waypoints.length);
       downloadBlob(new Blob([content], { type: 'application/gpx+xml' }), `track_${getNowStamp()}.gpx`);
-      showToast('GPXを保存しました。');
+      showToast('track.gpxを保存しました。');
     }
 
-    async function exportJsonBackup() {
-      const payload = {
-        version: APP_VERSION,
-        exportedAt: new Date().toISOString(),
-        trackPoints: appState.trackPoints,
-        waypoints: appState.waypoints
-      };
-      downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }), `find_lnglat_backup_${getNowStamp()}.json`);
-      showToast('JSONバックアップを保存しました。');
-    }
 
     async function exportZipBundle() {
       if (!window.JSZip) {
@@ -2120,7 +2111,9 @@
       showToast('ZIPを作成しています…');
       const zip = new JSZip();
       const stamp = getNowStamp();
-      zip.file('track.gpx', generateGPX(appState.trackPoints, appState.waypoints));
+      const gpxContent = generateGPX(appState.trackPoints, appState.waypoints);
+      validateGeneratedGpx(gpxContent, appState.waypoints.length);
+      zip.file('track.gpx', gpxContent);
       const photoFolder = zip.folder('photos');
       for (const waypoint of appState.waypoints) {
         if (!waypoint.photoId || !waypoint.photoFilename) continue;
@@ -2201,10 +2194,12 @@
       els.gpsModeSelect.value = appState.settings.gpsMode;
 
       els.trackDockBtn.classList.toggle('active', appState.isTracking || appState.isPaused);
-      els.trackDockBtn.querySelector('.dock-label').textContent = appState.isTracking ? '踏査終了' : (appState.isPaused ? '踏査再開' : '踏査開始');
-      els.trackDockBtn.querySelector('.dock-sub').textContent = appState.isTracking ? '記録停止' : (appState.isPaused ? '続きから再開' : '位置記録');
+      els.trackDockBtn.querySelector('.dock-label').textContent = appState.isTracking ? '地区踏査終了' : (appState.isPaused ? '地区踏査再開' : '地区踏査開始');
+      els.trackDockBtn.querySelector('.dock-sub').textContent = appState.isTracking ? '確認画面へ' : (appState.isPaused ? '続きから再開' : '位置記録');
       els.pointDockBtn.disabled = !appState.isTracking;
       els.pointDockBtn.classList.toggle('active', appState.manualPointMode);
+      els.metricDockBtn.disabled = !appState.isTracking;
+      els.metricDockBtn.classList.toggle('active', appState.isTracking);
 
       if (!appState._gpsStatus) setGpsStatus('bad', 'GPS待機');
       if (!appState._trackStatus) setTrackStatus(appState.isTracking ? 'ok' : (appState.isPaused ? 'warn' : 'bad'), appState.isTracking ? '記録中' : (appState.isPaused ? '一時停止中' : '未記録'));
@@ -2212,7 +2207,7 @@
 
       const manualPointCount = appState.waypoints.filter(w => !['スタート', 'ゴール'].includes(w.title)).length;
       const latestTrackPoint = appState.trackPoints.length ? appState.trackPoints[appState.trackPoints.length - 1] : null;
-      const latestEleText = latestTrackPoint && latestTrackPoint.ele != null ? `${Number(latestTrackPoint.ele).toFixed(2)} m` : '標高 未取得';
+      const latestEleText = latestTrackPoint && latestTrackPoint.ele != null ? `標高 ${Number(latestTrackPoint.ele).toFixed(2)} m` : '標高 未取得';
       els.metricDockBtn.querySelector('.dock-label').textContent = `距離 ${formatDistance(getTrackDistanceMeters(appState.trackPoints))}`;
       els.metricDockBtn.querySelector('.dock-sub').textContent = latestEleText;
       setTrackStatus(appState.isTracking ? 'ok' : (appState.isPaused ? 'warn' : 'bad'), appState.isTracking ? `記録中 ${manualPointCount} 点登録` : (appState.isPaused ? `一時停止中 ${manualPointCount} 点登録` : `${manualPointCount} 点登録`));
@@ -2426,6 +2421,15 @@
       return Number.isFinite(value) ? Number(value).toFixed(digits) : (0).toFixed(digits);
     }
 
+
+    function validateGeneratedGpx(gpxContent, expectedWaypointCount) {
+      const count = (gpxContent.match(/<wpt\b/g) || []).length;
+      if (count !== expectedWaypointCount) {
+        throw new Error(`waypoints mismatch: expected ${expectedWaypointCount}, got ${count}`);
+      }
+      return true;
+    }
+
     function generateWaypointOnlyGPX(waypoints) {
       const wpts = waypoints.map(wp => {
         const linkBlock = wp.photoFilename ? `\n    <link href="${escapeXml(`photos/${wp.photoFilename}`)}"><text>${escapeXml(wp.photoFilename)}</text><type>${escapeXml(wp.photoMimeType || 'image/webp')}</type></link>` : '';
@@ -2517,33 +2521,50 @@
       return escapeHtml(value);
     }
 
-    async function compressImageFile(file, { maxSize = 1600, quality = 0.78, thumbSize = 320 } = {}) {
+    async function compressImageFile(file, { maxSize = 1600, quality = 0.86, thumbSize = 320, targetBytes = 500 * 1024 } = {}) {
       const dataUrl = await fileToDataURL(file);
       const image = await loadImage(dataUrl);
-      const { width, height } = constrainSize(image.width, image.height, maxSize);
-      const mainCanvas = document.createElement('canvas');
-      mainCanvas.width = width;
-      mainCanvas.height = height;
-      const mainCtx = mainCanvas.getContext('2d', { alpha: false });
-      mainCtx.drawImage(image, 0, 0, width, height);
+      const supportedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+      const outputType = supportedTypes.has(file.type) ? file.type : 'image/jpeg';
 
-      const outputType = 'image/webp';
-      const blob = await canvasToBlob(mainCanvas, outputType, quality);
+      let currentMax = maxSize;
+      let currentQuality = quality;
+      let blob = null;
+      let width = image.width;
+      let height = image.height;
+
+      for (let i = 0; i < 8; i++) {
+        const fit = constrainSize(image.width, image.height, currentMax);
+        width = fit.width;
+        height = fit.height;
+        const mainCanvas = document.createElement('canvas');
+        mainCanvas.width = width;
+        mainCanvas.height = height;
+        const mainCtx = mainCanvas.getContext('2d', { alpha: outputType === 'image/png' });
+        mainCtx.drawImage(image, 0, 0, width, height);
+        blob = await canvasToBlob(mainCanvas, outputType, currentQuality);
+        if (blob.size <= targetBytes) break;
+        currentMax = Math.max(640, Math.round(currentMax * 0.85));
+        if (outputType === 'image/jpeg' || outputType === 'image/webp') {
+          currentQuality = Math.max(0.5, currentQuality - 0.08);
+        }
+      }
 
       const thumbSizeFit = constrainSize(image.width, image.height, thumbSize);
       const thumbCanvas = document.createElement('canvas');
       thumbCanvas.width = thumbSizeFit.width;
       thumbCanvas.height = thumbSizeFit.height;
-      const thumbCtx = thumbCanvas.getContext('2d', { alpha: false });
+      const thumbCtx = thumbCanvas.getContext('2d', { alpha: outputType === 'image/png' });
       thumbCtx.drawImage(image, 0, 0, thumbSizeFit.width, thumbSizeFit.height);
-      const thumbBlob = await canvasToBlob(thumbCanvas, outputType, 0.62);
+      const thumbBlob = await canvasToBlob(thumbCanvas, outputType, outputType === 'image/png' ? undefined : 0.62);
       const thumbDataUrl = await blobToDataURL(thumbBlob);
 
       const base = file.name.replace(/\.[^.]+$/, '') || `photo_${getNowStamp()}`;
+      const ext = (file.name.match(/\.([^.]+)$/)?.[1]) || mimeToExt(outputType);
       return {
         blob,
         thumbDataUrl,
-        filename: `${slugify(base)}_${getNowStamp()}.webp`,
+        filename: `${slugify(base)}_${getNowStamp()}.${ext}`,
         mimeType: outputType
       };
     }
@@ -2583,6 +2604,13 @@
       const bytes = new Uint8Array(len);
       for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
       return new Blob([bytes], { type: mime });
+    }
+
+
+    function mimeToExt(mime) {
+      if (mime === 'image/png') return 'png';
+      if (mime === 'image/webp') return 'webp';
+      return 'jpg';
     }
 
     function loadImage(src) {
