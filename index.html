@@ -333,7 +333,7 @@
     .fab-stack {
       position: fixed;
       right: 14px;
-      bottom: calc(var(--dock-h) + var(--safe-bottom) + 78px);
+      bottom: calc(var(--dock-h) + var(--safe-bottom) + 56px);
       z-index: 17;
       display: grid;
       gap: 10px;
@@ -570,15 +570,16 @@
       right: 10px;
       top: calc(var(--safe-top) + 78px);
       z-index: 24;
-      max-width: 720px;
+      max-width: 900px;
       margin: 0 auto;
-      background: rgba(37, 99, 235, 0.94);
+      background: rgba(37, 99, 235, 0.96);
       color: #fff;
-      border-radius: 16px;
+      border-radius: 18px;
       box-shadow: var(--shadow);
       padding: 10px 12px;
       display: none;
       align-items: center;
+      justify-content: space-between;
       gap: 10px;
     }
 
@@ -586,41 +587,11 @@
       display: flex;
     }
 
-    .mode-banner-main {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
-    .mode-banner-main .title {
-      font-size: 0.92rem;
-      line-height: 1.2;
-    }
-
     .mode-banner .meta {
-      font-size: 0.74rem;
-      opacity: 0.95;
+      font-size: 0.78rem;
+      opacity: 0.92;
       margin-top: 2px;
-      line-height: 1.3;
-    }
-
-    .mode-banner-actions {
-      display: flex;
-      flex: 0 0 auto;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .mode-banner-actions button {
-      min-width: 72px;
-      min-height: 40px;
-      padding: 8px 10px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.92);
-      color: #0f172a;
-      font-weight: 700;
-      white-space: nowrap;
-      writing-mode: horizontal-tb;
-      text-orientation: mixed;
+      line-height: 1.35;
     }
 
     .draft-marker {
@@ -648,62 +619,6 @@
     .hidden {
       display: none !important;
     }
-
-    .hint a {
-      color: #2563eb;
-      text-decoration: none;
-    }
-
-    .hint a:hover,
-    .hint a:focus {
-      text-decoration: underline;
-    }
-
-    .maplibregl-ctrl-top-right {
-      top: calc(var(--safe-top) + 112px) !important;
-      right: 10px !important;
-      z-index: 19 !important;
-    }
-
-    .maplibregl-ctrl-bottom-left,
-    .maplibregl-ctrl-bottom-right {
-      bottom: calc(var(--safe-bottom) + 0px) !important;
-      z-index: 70 !important;
-      pointer-events: auto !important;
-    }
-
-    .maplibregl-ctrl-bottom-left {
-      left: calc(env(safe-area-inset-left, 0px) + 14px) !important;
-    }
-
-    .maplibregl-ctrl-attrib {
-      font-size: 10px !important;
-      background: rgba(255,255,255,0.94) !important;
-      border-radius: 10px !important;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
-      margin: 0 !important;
-      max-width: calc(100vw - 24px);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib {
-      margin-left: 0 !important;
-      margin-bottom: 2px !important;
-    }
-
-    @media (max-width: 640px) {
-      .maplibregl-ctrl-top-right {
-        top: calc(var(--safe-top) + 124px) !important;
-      }
-
-      .maplibregl-ctrl-attrib {
-        max-width: calc(100vw - 20px);
-        font-size: 9px !important;
-      }
-    }
-
 
     @media (min-width: 700px) {
       .grid-2,
@@ -790,14 +705,11 @@
     </div>
 
     <div id="manualModeBanner" class="mode-banner" aria-live="polite">
-      <div class="mode-banner-main">
+      <div>
         <div class="title">任意地点追加モード</div>
-        <div class="meta">タップで配置、ドラッグで調整</div>
+        <div class="meta">地図の空白部分をタップして配置します。長押しでも配置できます。</div>
       </div>
-      <div class="mode-banner-actions">
-        <button id="manualModeEditBtn" type="button">入力へ</button>
-        <button id="manualModeCancelBtn" type="button">終了</button>
-      </div>
+      <button id="manualModeCancelBtn" type="button">終了</button>
     </div>
 
     <div class="fab-stack" aria-label="補助操作">
@@ -951,58 +863,31 @@
       </div>
     </div>
 
-
-    <div id="stopConfirmModal" class="modal" aria-hidden="true">
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="stopConfirmModalTitle">
+    <div id="helpModal" class="modal" aria-hidden="true">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle">
         <div class="modal-head">
           <div>
-            <div id="stopConfirmModalTitle" class="title">踏査をどうしますか？</div>
-            <div class="subtitle">誤操作でも続きから再開できます</div>
+            <div id="helpModalTitle" class="title">使い方</div>
+            <div class="subtitle">スマホで現場利用しやすい構成にしています</div>
           </div>
-          <button id="closeStopConfirmModalBtn" class="icon-btn" type="button" aria-label="閉じる">
+          <button id="closeHelpModalBtn" class="icon-btn" type="button" aria-label="閉じる">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
         </div>
         <div class="modal-body">
           <div class="hint">
-            踏査を続けるか、いったん出力して後で再開するか、記録を破棄して終了するかを選択してください。
+            1. 検索または現在地ボタンで場所を合わせます。<br />
+            2. 踏査開始で位置記録を始めます。<br />
+            3. ポイントからメモと写真を登録します。<br />
+            4. 出力から GPX または ZIP を保存します。<br /><br />
+            注意: Webアプリのため、画面がスリープしたり別アプリに移ると位置取得が止まることがあります。画面保持を試みますが、完全なバックグラウンド測位はできません。
           </div>
           <div class="inline-actions">
-            <button id="continueTrackingBtn" class="btn-success" type="button">続ける</button>
-            <button id="pauseExportBtn" class="btn-primary" type="button">出力する</button>
-            <button id="discardTrackingBtn" class="btn-danger" type="button">破棄して終了</button>
+            <button id="installHintBtn" class="btn-soft" type="button">ホーム画面追加の案内</button>
           </div>
         </div>
       </div>
     </div>
-
-<div id="helpModal" class="modal" aria-hidden="true">
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle">
-    <div class="modal-head">
-      <div>
-        <div id="helpModalTitle" class="title">使い方</div>
-        <div class="subtitle">保健師の地区踏査のためのアプリです</div>
-      </div>
-      <button id="closeHelpModalBtn" class="icon-btn" type="button" aria-label="閉じる">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
-    </div>
-    <div class="modal-body">
-      <div class="hint">
-        1. 検索または現在地ボタンで場所を合わせます。<br />
-        2. 踏査開始で位置記録を始めます。<br />
-        3. ポイントからメモと写真を登録します。<br />
-        4. 出力から GPX または ZIP を保存します。<br /><br />
-        注意: Webアプリのため、画面がスリープしたり別アプリに移ると位置取得が止まることがあります。画面保持を試みますが、完全なバックグラウンド測位はできません。<br /><br />
-        作成者：
-        <a href="https://x.com/GISPHN" target="_blank" rel="noopener noreferrer">@GISPHN</a>
-      </div>
-      <div class="inline-actions">
-        <button id="installHintBtn" class="btn-soft" type="button">ホーム画面追加の案内</button>
-      </div>
-    </div>
-  </div>
-</div>
 
     <div id="toastWrap" class="toast-wrap" aria-live="polite"></div>
   </div>
@@ -1060,10 +945,8 @@
       longPressTimer: null,
       longPressTriggered: false,
       pointDraftSource: 'current',
-      suppressMapClickUntil: 0,
-      isPaused: false,
       settings: {
-        mapStyle: 'osmfj-poi',
+        mapStyle: 'osm-bright',
         gpsMode: 'high'
       }
     };
@@ -1090,11 +973,11 @@
         'menuBtn','helpBtn','searchSheet','backdrop','searchInput','searchBtn','clearSearchBtn','searchResults',
         'styleSelect','gpsModeSelect','searchDockBtn','trackDockBtn','pointDockBtn','exportDockBtn',
         'currentBtn','statusBar','gpsDot','gpsText','trackDot','trackText','wakeDot','wakeText','titleSub',
-        'pointModeModal','closePointModeModalBtn','pointCurrentBtn','pointManualBtn','manualModeBanner','manualModeEditBtn','manualModeCancelBtn','pointModal','closePointModalBtn','cancelPointBtn','savePointBtn','capturePhotoBtn','removePhotoBtn',
+        'pointModeModal','closePointModeModalBtn','pointCurrentBtn','pointManualBtn','manualModeBanner','manualModeCancelBtn','pointModal','closePointModalBtn','cancelPointBtn','savePointBtn','capturePhotoBtn','removePhotoBtn',
         'photoInput','photoPreview','photoMeta','pointTitleInput','pointTagSelect','pointMemo1Input','pointMemo2Input',
         'pointModalTitle','pointModalSub','pointLat','pointLng','pointEle','pointAcc','exportModal','closeExportModalBtn','downloadGpxBtn',
         'downloadZipBtn','downloadJsonBtn','finishAndClearBtn','exportTrackCount','exportPointCount',
-        'exportPhotoCount','exportDistance','stopConfirmModal','closeStopConfirmModalBtn','continueTrackingBtn','pauseExportBtn','discardTrackingBtn','helpModal','closeHelpModalBtn','installHintBtn','toastWrap'
+        'exportPhotoCount','exportDistance','helpModal','closeHelpModalBtn','installHintBtn','toastWrap'
       ].forEach(id => els[id] = document.getElementById(id));
     }
 
@@ -1103,11 +986,7 @@
       els.searchDockBtn.addEventListener('click', toggleSearchSheet);
       els.backdrop.addEventListener('click', () => {
         closeSearchSheet();
-        if (appState.activeModal === els.exportModal && appState.isPaused) {
-          closeExportAndMaybeResume();
-        } else {
-          closeActiveModal();
-        }
+        closeActiveModal();
       });
       els.searchBtn.addEventListener('click', handleSearch);
       els.searchInput.addEventListener('keydown', (e) => {
@@ -1131,15 +1010,7 @@
         }
       });
       els.currentBtn.addEventListener('click', moveToCurrentLocation);
-      els.trackDockBtn.addEventListener('click', () => {
-        if (appState.isTracking) {
-          openModal('stopConfirmModal');
-        } else if (appState.isPaused) {
-          resumeTrackingAfterExport();
-        } else {
-          startTracking();
-        }
-      });
+      els.trackDockBtn.addEventListener('click', () => appState.isTracking ? stopTracking() : startTracking());
       els.pointDockBtn.addEventListener('click', openPointModeModal);
       els.exportDockBtn.addEventListener('click', openExportModal);
       els.closePointModeModalBtn.addEventListener('click', closeActiveModal);
@@ -1149,7 +1020,6 @@
         activateManualPointMode();
       });
       els.manualModeCancelBtn.addEventListener('click', deactivateManualPointMode);
-      els.manualModeEditBtn.addEventListener('click', openPointModalFromManualDraft);
       els.helpBtn.addEventListener('click', () => openModal('helpModal'));
       els.closeHelpModalBtn.addEventListener('click', closeActiveModal);
       els.installHintBtn.addEventListener('click', showInstallHelp);
@@ -1161,15 +1031,11 @@
       els.removePhotoBtn.addEventListener('click', clearPointPhotoDraft);
       els.savePointBtn.addEventListener('click', savePointDraft);
 
-      els.closeExportModalBtn.addEventListener('click', closeExportAndMaybeResume);
+      els.closeExportModalBtn.addEventListener('click', closeActiveModal);
       els.downloadGpxBtn.addEventListener('click', exportGPX);
       els.downloadZipBtn.addEventListener('click', exportZipBundle);
       els.downloadJsonBtn.addEventListener('click', exportJsonBackup);
       els.finishAndClearBtn.addEventListener('click', clearAllDataWithConfirm);
-      els.closeStopConfirmModalBtn.addEventListener('click', closeActiveModal);
-      els.continueTrackingBtn.addEventListener('click', closeActiveModal);
-      els.pauseExportBtn.addEventListener('click', pauseTrackingForExport);
-      els.discardTrackingBtn.addEventListener('click', discardTrackingFromModal);
 
       window.addEventListener('beforeinstallprompt', (event) => {
         event.preventDefault();
@@ -1180,8 +1046,6 @@
         showToast('ホーム画面に追加されました。');
       });
       window.addEventListener('visibilitychange', handleVisibilityChange);
-      window.addEventListener('focus', handleResumeSignals);
-      window.addEventListener('pageshow', handleResumeSignals);
       window.addEventListener('online', () => showToast('オンラインに戻りました。'));
       window.addEventListener('offline', () => showToast('オフラインです。保存済みデータは保持されます。'));
     }
@@ -1192,13 +1056,12 @@
         style: STYLE_CATALOG[appState.settings.mapStyle] || STYLE_CATALOG['osm-bright'],
         center: [135.5022, 34.6937],
         zoom: 14,
-        attributionControl: false,
+        attributionControl: true,
         hash: false,
         cooperativeGestures: false
       });
 
       appState.map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
-      appState.map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
 
       appState.map.on('load', () => {
         ensureSourcesAndLayers();
@@ -1296,17 +1159,9 @@
     function attachWaypointPopupEvents() {
       if (appState.map.__waypointPopupBound) return;
       appState.map.__waypointPopupBound = true;
-      appState.map.on('click', 'waypoint-cluster-circle', (event) => {
-        appState.suppressMapClickUntil = Date.now() + 500;
-        handleClusterClick(event);
-      });
-      appState.map.on('click', 'waypoint-cluster-count', (event) => {
-        appState.suppressMapClickUntil = Date.now() + 500;
-        handleClusterClick(event);
-      });
-
-      const openWaypointPopup = (event) => {
-        appState.suppressMapClickUntil = Date.now() + 500;
+      appState.map.on('click', 'waypoint-cluster-circle', handleClusterClick);
+      appState.map.on('click', 'waypoint-cluster-count', handleClusterClick);
+      appState.map.on('click', 'waypoint-circle', (event) => {
         if (appState.currentPopup) {
           appState.currentPopup.remove();
           appState.currentPopup = null;
@@ -1324,10 +1179,7 @@
           .setLngLat(coords)
           .setHTML(html)
           .addTo(appState.map);
-      };
-
-      appState.map.on('click', 'waypoint-circle', openWaypointPopup);
-      appState.map.on('click', 'waypoint-label', openWaypointPopup);
+      });
       ['waypoint-circle', 'waypoint-label', 'waypoint-cluster-circle', 'waypoint-cluster-count'].forEach(layerId => {
         appState.map.on('mouseenter', layerId, () => appState.map.getCanvas().style.cursor = 'pointer');
         appState.map.on('mouseleave', layerId, () => appState.map.getCanvas().style.cursor = '');
@@ -1385,7 +1237,7 @@
           if (isWaypointFeatureAtPoint(startPoint)) return;
           appState.longPressTriggered = true;
           activateManualPointMode({ silent: true });
-          placeManualDraftAt(startLngLat, { openModalAfter: false });
+          placeManualDraftAt(startLngLat, { openModalAfter: true });
           showToast('任意地点ポイントを配置しました。');
         }, 650);
       }, { passive: true });
@@ -1413,10 +1265,6 @@
     }
 
     function handleMapClick(event) {
-      if (Date.now() < (appState.suppressMapClickUntil || 0)) {
-        return;
-      }
-
       if (isWaypointFeatureAtPoint(event.point)) {
         return;
       }
@@ -1427,7 +1275,7 @@
       }
 
       if (appState.manualPointMode) {
-        placeManualDraftAt(event.lngLat, { openModalAfter: false });
+        placeManualDraftAt(event.lngLat, { openModalAfter: true });
         return;
       }
 
@@ -1545,7 +1393,6 @@
         const startedAt = new Date().toISOString();
         await putMeta(SESSION_KEY, { active: true, startedAt });
         appState.isTracking = true;
-        appState.isPaused = false;
         updateCurrentMarker(startPos.coords);
 
         const startPoint = normalizeTrackPoint(startPos.coords, startedAt);
@@ -1575,52 +1422,34 @@
       appState.trackWatchId = navigator.geolocation.watchPosition(handleTrackPosition, handleTrackError, getGeoOptions());
     }
 
-
     async function stopTracking() {
-      openModal('stopConfirmModal');
-    }
-
-    async function pauseTrackingForExport() {
-      closeActiveModal();
       if (!appState.isTracking) return;
       if (appState.trackWatchId != null) {
         navigator.geolocation.clearWatch(appState.trackWatchId);
         appState.trackWatchId = null;
       }
+      try {
+        const endPos = await getCurrentPositionPromise(getGeoOptions());
+        updateCurrentMarker(endPos.coords);
+        const endPoint = normalizeTrackPoint(endPos.coords, new Date().toISOString());
+        await addTrackPointToState(endPoint);
+        const endWaypoint = await buildWaypointFromCoords(endPos.coords, {
+          title: 'ゴール',
+          memo1: '地区踏査終了',
+          memo2: '',
+          tag: ''
+        });
+        await addWaypointToState(endWaypoint);
+      } catch (error) {
+        console.warn('終了地点の取得に失敗', error);
+        showToast('終了地点のGPS取得に失敗しました。直前の記録まで保存しています。');
+      }
       appState.isTracking = false;
-      appState.isPaused = true;
       deactivateManualPointMode({ preserveDraft: false, silent: true });
-      await putMeta(SESSION_KEY, { active: true, paused: true, startedAt: (await getMeta(SESSION_KEY))?.startedAt || new Date().toISOString() });
+      await putMeta(SESSION_KEY, { active: false, startedAt: (await getMeta(SESSION_KEY))?.startedAt || null, endedAt: new Date().toISOString() });
       await releaseWakeLock();
       renderState();
       openExportModal();
-    }
-
-    async function resumeTrackingAfterExport() {
-      closeActiveModal();
-      if (!appState.isPaused) return;
-      appState.isPaused = false;
-      appState.isTracking = true;
-      await putMeta(SESSION_KEY, { active: true, paused: false, startedAt: (await getMeta(SESSION_KEY))?.startedAt || new Date().toISOString() });
-      restartTrackingWatcher();
-      await requestWakeLock();
-      renderState();
-      showToast('地区踏査を再開しました。');
-    }
-
-    async function closeExportAndMaybeResume() {
-      closeActiveModal();
-      if (appState.isPaused) {
-        await resumeTrackingAfterExport();
-      }
-    }
-
-    async function discardTrackingFromModal() {
-      const ok = confirm('今回の踏査記録を破棄して終了します。よろしいですか？');
-      if (!ok) return;
-      closeActiveModal();
-      await clearSessionData();
-      showToast('記録を破棄しました。');
     }
 
     async function handleTrackPosition(position) {
@@ -1674,7 +1503,6 @@
         appState.pointDraft = {
           coords: pos.coords,
           photo: null,
-          photoDataUrl: '',
           thumbDataUrl: '',
           filename: '',
           mimeType: ''
@@ -1687,17 +1515,6 @@
         console.error(error);
         showToast('ポイント用の現在地取得に失敗しました。');
       }
-    }
-
-    function openPointModalFromManualDraft() {
-      if (!appState.pointDraft?.coords || appState.pointDraftSource !== 'manual') {
-        showToast('先に地図上へ任意地点を配置してください。');
-        return;
-      }
-      fillPointDraftUI({ keepInputs: true });
-      els.pointModalTitle.textContent = '任意地点ポイントを追加';
-      els.pointModalSub.textContent = '位置を確認してメモと写真を登録します';
-      openModal('pointModal');
     }
 
     function activateManualPointMode({ silent = false } = {}) {
@@ -1754,7 +1571,6 @@
         appState.pointDraft = {
           coords,
           photo: null,
-          photoDataUrl: '',
           thumbDataUrl: '',
           filename: '',
           mimeType: ''
@@ -1769,10 +1585,6 @@
         appState.draftMarker = new maplibregl.Marker({ element: el, draggable: true })
           .setLngLat([coords.longitude, coords.latitude])
           .addTo(appState.map);
-        el.addEventListener('click', (ev) => {
-          ev.stopPropagation();
-          openPointModalFromManualDraft();
-        });
         appState.draftMarker.on('dragend', () => {
           const ll = appState.draftMarker.getLngLat();
           appState.pointDraft.coords = {
@@ -1789,9 +1601,8 @@
 
       fillPointDraftUI({ keepInputs: Boolean(document.getElementById('pointModal')?.classList.contains('show')) });
       els.pointModalTitle.textContent = '任意地点ポイントを追加';
-      els.pointModalSub.textContent = '位置を確認してメモと写真を登録します';
+      els.pointModalSub.textContent = '地図上で配置した地点にメモと写真を登録します';
       if (openModalAfter) openModal('pointModal');
-      else showToast('任意地点を配置しました。ドラッグで調整し、「入力へ」から保存してください。', 3200);
     }
 
     function cancelPointModal() {
@@ -1826,7 +1637,6 @@
         showToast('写真を圧縮しています…');
         const compressed = await compressImageFile(file, { maxSize: 1600, quality: 0.78, thumbSize: 320 });
         appState.pointDraft.photo = compressed.blob;
-        appState.pointDraft.photoDataUrl = await blobToDataURL(compressed.blob);
         appState.pointDraft.thumbDataUrl = compressed.thumbDataUrl;
         appState.pointDraft.filename = compressed.filename;
         appState.pointDraft.mimeType = compressed.mimeType;
@@ -1846,7 +1656,6 @@
     function clearPointPhotoDraft(silent = false) {
       if (appState.pointDraft) {
         appState.pointDraft.photo = null;
-        appState.pointDraft.photoDataUrl = '';
         appState.pointDraft.thumbDataUrl = '';
         appState.pointDraft.filename = '';
         appState.pointDraft.mimeType = '';
@@ -1860,8 +1669,6 @@
 
     async function savePointDraft() {
       if (!appState.pointDraft?.coords) return;
-      if (els.savePointBtn.disabled) return;
-
       const coords = appState.pointDraft.coords;
       const title = els.pointTitleInput.value.trim();
       const memo1 = els.pointMemo1Input.value.trim();
@@ -1871,59 +1678,33 @@
         showToast('タイトル・メモ・写真のいずれかを入力してください。');
         return;
       }
-
-      const originalBtnText = els.savePointBtn.textContent;
-      els.savePointBtn.disabled = true;
-      els.savePointBtn.textContent = '保存中…';
-
-      try {
-        let photoMeta = null;
-        if (appState.pointDraft.photo) {
-          const photoId = (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function')
-            ? globalThis.crypto.randomUUID()
-            : `photo_${getNowStamp()}_${Math.random().toString(36).slice(2, 10)}`;
-          photoMeta = {
-            id: photoId,
-            filename: appState.pointDraft.filename || `${getNowStamp()}_photo.webp`,
-            mimeType: appState.pointDraft.mimeType || 'image/webp',
-            thumbDataUrl: appState.pointDraft.thumbDataUrl || '',
-            size: appState.pointDraft.photo.size
-          };
-
-          try {
-            await putPhoto({ ...photoMeta, dataUrl: appState.pointDraft.photoDataUrl || await blobToDataURL(appState.pointDraft.photo) });
-          } catch (photoError) {
-            console.error('photo save failed', photoError);
-            const keepPointOnly = confirm('画像の保存に失敗しました。画像なしでポイントだけ保存しますか？');
-            if (!keepPointOnly) {
-              throw photoError;
-            }
-            photoMeta = null;
-          }
-        }
-
-        const waypoint = await buildWaypointFromCoords(coords, {
-          title: title || tag || 'ポイント',
-          memo1,
-          memo2,
-          tag,
-          photoMeta
-        });
-        await addWaypointToState(waypoint);
-        closeActiveModal();
-        if (appState.pointDraftSource === 'manual') {
-          deactivateManualPointMode({ preserveDraft: false, silent: true });
-        } else {
-          appState.pointDraft = null;
-        }
-        showToast(photoMeta ? 'ポイントを保存しました。' : 'ポイントを保存しました。');
-      } catch (error) {
-        console.error('savePointDraft failed', error);
-        showToast(`保存に失敗しました: ${error?.message || '画像または端末内保存のエラー'}`, 4200);
-      } finally {
-        els.savePointBtn.disabled = false;
-        els.savePointBtn.textContent = originalBtnText;
+      let photoMeta = null;
+      if (appState.pointDraft.photo) {
+        const photoId = crypto.randomUUID();
+        photoMeta = {
+          id: photoId,
+          filename: appState.pointDraft.filename || `${getNowStamp()}_photo.webp`,
+          mimeType: appState.pointDraft.mimeType || 'image/webp',
+          thumbDataUrl: appState.pointDraft.thumbDataUrl || '',
+          size: appState.pointDraft.photo.size
+        };
+        await putPhoto({ ...photoMeta, blob: appState.pointDraft.photo });
       }
+      const waypoint = await buildWaypointFromCoords(coords, {
+        title: title || tag || 'ポイント',
+        memo1,
+        memo2,
+        tag,
+        photoMeta
+      });
+      await addWaypointToState(waypoint);
+      closeActiveModal();
+      if (appState.pointDraftSource === 'manual') {
+        deactivateManualPointMode({ preserveDraft: false, silent: true });
+      } else {
+        appState.pointDraft = null;
+      }
+      showToast('ポイントを保存しました。');
     }
 
     async function buildWaypointFromCoords(coords, { title, memo1, memo2, tag, photoMeta = null }) {
@@ -2019,12 +1800,6 @@
       }
       setWakeStatus('bad', '画面保持なし');
       renderState();
-    }
-
-    async function handleResumeSignals() {
-      if ((appState.isTracking || appState.isPaused) && document.visibilityState === 'visible' && !appState.wakeLock) {
-        await requestWakeLock();
-      }
     }
 
     async function handleVisibilityChange() {
@@ -2132,9 +1907,6 @@
       const zip = new JSZip();
       const stamp = getNowStamp();
       zip.file('track.gpx', generateGPX(appState.trackPoints, appState.waypoints));
-      zip.file('points.geojson', JSON.stringify(buildWaypointsGeoJSON(appState.waypoints, { includeThumb: true }), null, 2));
-      zip.file('points.gpx', generateWaypointOnlyGPX(appState.waypoints));
-      zip.file('README_QGIS.txt', buildQgisReadme());
       const photoFolder = zip.folder('photos');
       for (const waypoint of appState.waypoints) {
         if (!waypoint.photoId || !waypoint.photoFilename) continue;
@@ -2146,8 +1918,8 @@
         }
       }
       const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
-      downloadBlob(blob, `find_lnglat_bundle_${stamp}.zip`);
-      showToast('調査セットZIPを保存しました。');
+      downloadBlob(blob, `find_lnglat_track_${stamp}.zip`);
+      showToast('track.gpx と写真フォルダをZIP保存しました。');
     }
 
     async function clearAllDataWithConfirm() {
@@ -2183,8 +1955,7 @@
       appState.trackPoints = await getAll(STORE_TRACKS);
       appState.waypoints = await getAll(STORE_WAYPOINTS);
       const session = await getMeta(SESSION_KEY);
-      appState.isTracking = Boolean(session?.active) && !Boolean(session?.paused);
-      appState.isPaused = Boolean(session?.paused);
+      appState.isTracking = Boolean(session?.active);
       appState.lastTrackPoint = appState.trackPoints.length ? appState.trackPoints[appState.trackPoints.length - 1] : null;
       rebuildSegmentsFromTrack();
       refreshMapSources();
@@ -2192,8 +1963,6 @@
         restartTrackingWatcher();
         await requestWakeLock();
         showToast('未終了の踏査記録を復元しました。');
-      } else if (appState.isPaused) {
-        showToast('一時停止中の踏査記録を復元しました。再開できます。');
       }
     }
 
@@ -2214,20 +1983,20 @@
       els.styleSelect.value = appState.settings.mapStyle;
       els.gpsModeSelect.value = appState.settings.gpsMode;
 
-      els.trackDockBtn.classList.toggle('active', appState.isTracking || appState.isPaused);
-      els.trackDockBtn.querySelector('.dock-label').textContent = appState.isTracking ? '踏査終了' : (appState.isPaused ? '踏査再開' : '踏査開始');
-      els.trackDockBtn.querySelector('.dock-sub').textContent = appState.isTracking ? '記録停止' : (appState.isPaused ? '続きから再開' : '位置記録');
+      els.trackDockBtn.classList.toggle('active', appState.isTracking);
+      els.trackDockBtn.querySelector('.dock-label').textContent = appState.isTracking ? '踏査終了' : '踏査開始';
+      els.trackDockBtn.querySelector('.dock-sub').textContent = appState.isTracking ? '記録停止' : '位置記録';
       els.pointDockBtn.disabled = !appState.isTracking;
       els.pointDockBtn.classList.toggle('active', appState.manualPointMode);
       els.exportDockBtn.disabled = !(appState.trackPoints.length || appState.waypoints.length);
 
       if (!appState._gpsStatus) setGpsStatus('bad', 'GPS待機');
-      if (!appState._trackStatus) setTrackStatus(appState.isTracking ? 'ok' : (appState.isPaused ? 'warn' : 'bad'), appState.isTracking ? '記録中' : (appState.isPaused ? '一時停止中' : '未記録'));
+      if (!appState._trackStatus) setTrackStatus(appState.isTracking ? 'ok' : 'bad', appState.isTracking ? '記録中' : '未記録');
       if (!appState._wakeStatus) setWakeStatus('bad', '画面保持なし');
 
       const manualPointCount = appState.waypoints.filter(w => !['スタート', 'ゴール'].includes(w.title)).length;
-      setTrackStatus(appState.isTracking ? 'ok' : (appState.isPaused ? 'warn' : 'bad'), appState.isTracking ? `記録中 ${manualPointCount} 点登録` : (appState.isPaused ? `一時停止中 ${manualPointCount} 点登録` : `${manualPointCount} 点登録`));
-      els.titleSub.textContent = appState.manualPointMode ? '任意地点追加モード' : (appState.isTracking ? `記録中 / 距離 ${formatDistance(getTrackDistanceMeters(appState.trackPoints))}` : (appState.isPaused ? `一時停止中 / 距離 ${formatDistance(getTrackDistanceMeters(appState.trackPoints))}` : 'スマホ対応・地区踏査モード'));
+      setTrackStatus(appState.isTracking ? 'ok' : 'bad', appState.isTracking ? `記録中 ${manualPointCount} 点登録` : `${manualPointCount} 点登録`);
+      els.titleSub.textContent = appState.manualPointMode ? '任意地点追加モード' : (appState.isTracking ? `記録中 / 距離 ${formatDistance(getTrackDistanceMeters(appState.trackPoints))}` : 'スマホ対応・地区踏査モード');
 
       applyStatusChip(els.gpsDot, els.gpsText, appState._gpsStatus);
       applyStatusChip(els.trackDot, els.trackText, appState._trackStatus);
@@ -2331,13 +2100,24 @@
     }
 
     function generateGPX(trackPoints, waypoints) {
-      const trkpts = trackPoints.map(tp => `      <trkpt lat="${tp.lat}" lon="${tp.lng}">\n        ${tp.ele != null ? `<ele>${tp.ele}</ele>` : ''}\n        <time>${escapeXml(tp.recordedAt)}</time>\n      </trkpt>`).join('\n');
-      const wpts = waypoints.map(wp => {
-        const linkBlock = wp.photoFilename ? `\n    <link href="${escapeXml(`photos/${wp.photoFilename}`)}"><text>${escapeXml(wp.photoFilename)}</text><type>${escapeXml(wp.photoMimeType || 'image/webp')}</type></link>` : '';
-        const descParts = [wp.memo1, wp.memo2, wp.tag].filter(Boolean).join(' / ');
-        return `  <wpt lat="${wp.lat}" lon="${wp.lng}">\n    ${wp.ele != null ? `<ele>${wp.ele}</ele>` : ''}\n    <time>${escapeXml(wp.recordedAt)}</time>\n    <name>${escapeXml(wp.title || '')}</name>\n    <cmt>${escapeXml(wp.memo1 || '')}</cmt>\n    <desc>${escapeXml(descParts)}</desc>${linkBlock}\n  </wpt>`;
+      const ns = 'https://gisphn.github.io/find-lnglat/export/1.0';
+      const prepared = prepareExportData(trackPoints, waypoints);
+
+      const segXml = prepared.trackSegments.map((seg) => {
+        const trkpts = seg.points.map((tp) => {
+          const eleTag = tp.ele_m === '' ? '' : `\n        <ele>${escapeXml(tp.ele_m)}</ele>`;
+          return `      <trkpt lat="${escapeXml(tp.lat)}" lon="${escapeXml(tp.lng)}">${eleTag}\n        <time>${escapeXml(tp.time_iso_jst)}</time>\n        <extensions>\n          <find:track_seg_id>${escapeXml(tp.track_seg_id)}</find:track_seg_id>\n          <find:time1_JST>${escapeXml(tp.time1_JST)}</find:time1_JST>\n          <find:time2_JST>${escapeXml(tp.time2_JST)}</find:time2_JST>\n          <find:ele_m>${escapeXml(tp.ele_m)}</find:ele_m>\n          <find:distance_km>${escapeXml(tp.distance_km)}</find:distance_km>\n          <find:speed_km_h>${escapeXml(tp.speed_km_h)}</find:speed_km_h>\n          <find:accuracy_m>${escapeXml(tp.accuracy_m)}</find:accuracy_m>\n        </extensions>\n      </trkpt>`;
+        }).join('\n');
+        return `    <trkseg>\n${trkpts}\n    </trkseg>`;
       }).join('\n');
-      return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1">\n  <metadata>\n    <name>Find LngLat Track</name>\n    <time>${new Date().toISOString()}</time>\n  </metadata>\n  <trk>\n    <name>地区踏査トラック</name>\n    <trkseg>\n${trkpts}\n    </trkseg>\n  </trk>\n${wpts}\n</gpx>`;
+
+      const wpts = prepared.waypoints.map((wp) => {
+        const eleTag = wp.ele_m === '' ? '' : `\n    <ele>${escapeXml(wp.ele_m)}</ele>`;
+        const linkBlock = wp.photoPath ? `\n    <link href="${escapeXml(wp.photoPath)}"><text>${escapeXml(wp.photoFilename)}</text><type>${escapeXml(wp.photoMimeType || 'image/webp')}</type></link>` : '';
+        return `  <wpt lat="${escapeXml(wp.lat)}" lon="${escapeXml(wp.lng)}">${eleTag}\n    <time>${escapeXml(wp.time_iso_jst)}</time>${linkBlock}\n    <extensions>\n      <find:waypoint_id>${escapeXml(wp.waypoint_id)}</find:waypoint_id>\n      <find:time1_JST>${escapeXml(wp.time1_JST)}</find:time1_JST>\n      <find:time2_JST>${escapeXml(wp.time2_JST)}</find:time2_JST>\n      <find:ele_m>${escapeXml(wp.ele_m)}</find:ele_m>\n      <find:accuracy_m>${escapeXml(wp.accuracy_m)}</find:accuracy_m>\n      <find:title>${escapeXml(wp.title)}</find:title>\n      <find:memo1>${escapeXml(wp.memo1)}</find:memo1>\n      <find:memo2>${escapeXml(wp.memo2)}</find:memo2>\n      <find:hasphoto>${escapeXml(wp.hasphoto)}</find:hasphoto>\n      <find:photoId>${escapeXml(wp.photoId)}</find:photoId>\n      <find:photoFilename>${escapeXml(wp.photoFilename)}</find:photoFilename>\n      <find:photoPath>${escapeXml(wp.photoPath)}</find:photoPath>\n      <find:photoThumbDataUrl>${escapeXml(wp.photoThumbDataUrl)}</find:photoThumbDataUrl>\n    </extensions>\n  </wpt>`;
+      }).join('\n');
+
+      return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1" xmlns:find="${ns}">\n  <metadata>\n    <name>Find LngLat Track</name>\n    <time>${escapeXml(prepared.exportedAtIsoJst)}</time>\n  </metadata>\n  <trk>\n    <name>地区踏査トラック</name>\n${segXml}\n  </trk>\n${wpts}\n</gpx>`;
     }
 
     function generateWaypointOnlyGPX(waypoints) {
@@ -2347,6 +2127,148 @@
       }).join('\n');
       return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1">\n${wpts}\n</gpx>`;
     }
+
+
+    function prepareExportData(trackPoints, waypoints) {
+      const exportedAtIsoJst = toIsoJst(new Date().toISOString());
+      const preparedTrack = [];
+      const trackSegments = [];
+      let cumulativeMeters = 0;
+      let currentSegId = 1;
+      let currentSegment = { segId: currentSegId, points: [] };
+
+      for (let i = 0; i < trackPoints.length; i++) {
+        const tp = trackPoints[i] || {};
+        const recordedAt = tp.recordedAt || new Date().toISOString();
+        if (i > 0) {
+          const prev = trackPoints[i - 1] || {};
+          const prevTime = prev.recordedAt ? new Date(prev.recordedAt) : null;
+          const currTime = recordedAt ? new Date(recordedAt) : null;
+          const gapSeconds = (prevTime && currTime) ? Math.abs(currTime - prevTime) / 1000 : 0;
+          if (gapSeconds > 18) {
+            trackSegments.push(currentSegment);
+            currentSegId += 1;
+            currentSegment = { segId: currentSegId, points: [] };
+          }
+          if (isFiniteNumber(prev.lat) && isFiniteNumber(prev.lng) && isFiniteNumber(tp.lat) && isFiniteNumber(tp.lng)) {
+            cumulativeMeters += haversine(prev.lat, prev.lng, tp.lat, tp.lng);
+          }
+        }
+
+        const speedKmh = computeSpeedKmh(trackPoints, i);
+        const prepared = {
+          track_seg_id: String(currentSegId),
+          lat: formatCoord(tp.lat),
+          lng: formatCoord(tp.lng),
+          time_iso_jst: toIsoJst(recordedAt),
+          time1_JST: formatJstDate(recordedAt),
+          time2_JST: formatJstTime(recordedAt),
+          ele_m: formatMaybeNumber(tp.ele, 2),
+          distance_km: formatNumber(cumulativeMeters / 1000, 2),
+          speed_km_h: formatMaybeNumber(speedKmh, 2),
+          accuracy_m: formatMaybeNumber(tp.accuracy, 2)
+        };
+        preparedTrack.push(prepared);
+        currentSegment.points.push(prepared);
+      }
+      if (currentSegment.points.length || trackPoints.length === 0) {
+        trackSegments.push(currentSegment);
+      }
+
+      const preparedWaypoints = waypoints.map((wp, idx) => {
+        const recordedAt = wp.recordedAt || new Date().toISOString();
+        return {
+          waypoint_id: String(idx + 1),
+          lat: formatCoord(wp.lat),
+          lng: formatCoord(wp.lng),
+          time_iso_jst: toIsoJst(recordedAt),
+          time1_JST: formatJstDate(recordedAt),
+          time2_JST: formatJstTime(recordedAt),
+          ele_m: formatMaybeNumber(wp.ele, 2),
+          accuracy_m: formatMaybeNumber(wp.accuracy, 2),
+          title: safeText(wp.title),
+          memo1: safeText(wp.memo1),
+          memo2: safeText(wp.memo2),
+          hasphoto: String(Boolean(wp.hasPhoto)),
+          photoId: safeText(wp.photoId),
+          photoFilename: safeText(wp.photoFilename),
+          photoPath: wp.photoFilename ? `photos/${wp.photoFilename}` : '',
+          photoThumbDataUrl: safeText(wp.photoThumbDataUrl),
+          photoMimeType: safeText(wp.photoMimeType || 'image/webp')
+        };
+      });
+
+      return { exportedAtIsoJst, trackPoints: preparedTrack, trackSegments, waypoints: preparedWaypoints };
+    }
+
+    function computeSpeedKmh(trackPoints, index) {
+      const tp = trackPoints[index] || {};
+      if (isFiniteNumber(tp.speed)) return Number(tp.speed) * 3.6;
+      if (index <= 0) return null;
+      const prev = trackPoints[index - 1] || {};
+      if (!(isFiniteNumber(prev.lat) && isFiniteNumber(prev.lng) && isFiniteNumber(tp.lat) && isFiniteNumber(tp.lng))) return null;
+      const t1 = prev.recordedAt ? new Date(prev.recordedAt).getTime() : NaN;
+      const t2 = tp.recordedAt ? new Date(tp.recordedAt).getTime() : NaN;
+      if (!Number.isFinite(t1) || !Number.isFinite(t2) || t2 <= t1) return null;
+      const meters = haversine(prev.lat, prev.lng, tp.lat, tp.lng);
+      const hours = (t2 - t1) / 3600000;
+      if (hours <= 0) return null;
+      return meters / 1000 / hours;
+    }
+
+    function formatJstDate(isoValue) {
+      const d = new Date(isoValue);
+      if (Number.isNaN(d.getTime())) return '';
+      const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+      const y = jst.getUTCFullYear();
+      const m = String(jst.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(jst.getUTCDate()).padStart(2, '0');
+      return `${y}/${m}/${day}`;
+    }
+
+    function formatJstTime(isoValue) {
+      const d = new Date(isoValue);
+      if (Number.isNaN(d.getTime())) return '';
+      const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+      const hh = String(jst.getUTCHours()).padStart(2, '0');
+      const mm = String(jst.getUTCMinutes()).padStart(2, '0');
+      const ss = String(jst.getUTCSeconds()).padStart(2, '0');
+      return `${hh}:${mm}:${ss}`;
+    }
+
+    function toIsoJst(isoValue) {
+      const d = new Date(isoValue);
+      if (Number.isNaN(d.getTime())) return '';
+      const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+      const y = jst.getUTCFullYear();
+      const m = String(jst.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(jst.getUTCDate()).padStart(2, '0');
+      const hh = String(jst.getUTCHours()).padStart(2, '0');
+      const mm = String(jst.getUTCMinutes()).padStart(2, '0');
+      const ss = String(jst.getUTCSeconds()).padStart(2, '0');
+      return `${y}-${m}-${day}T${hh}:${mm}:${ss}+09:00`;
+    }
+
+    function formatMaybeNumber(value, digits = 2) {
+      return isFiniteNumber(value) ? Number(value).toFixed(digits) : '';
+    }
+
+    function formatNumber(value, digits = 2) {
+      return Number(value).toFixed(digits);
+    }
+
+    function formatCoord(value) {
+      return isFiniteNumber(value) ? Number(value).toFixed(6) : '';
+    }
+
+    function isFiniteNumber(value) {
+      return Number.isFinite(Number(value));
+    }
+
+    function safeText(value) {
+      return value == null ? '' : String(value);
+    }
+
 
     function buildQgisReadme() {
       return [
@@ -2487,16 +2409,6 @@
         reader.onerror = reject;
         reader.readAsDataURL(blob);
       });
-    }
-
-    function dataUrlToBlob(dataUrl) {
-      const parts = String(dataUrl).split(',');
-      const mime = (parts[0].match(/data:(.*?);base64/) || [])[1] || 'application/octet-stream';
-      const binary = atob(parts[1] || '');
-      const len = binary.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
-      return new Blob([bytes], { type: mime });
     }
 
     function loadImage(src) {
