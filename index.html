@@ -288,7 +288,7 @@
       padding: 10px;
       box-shadow: var(--shadow);
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 10px;
       border: 1px solid rgba(255,255,255,0.7);
       backdrop-filter: blur(18px);
@@ -667,13 +667,9 @@
 
     .maplibregl-ctrl-bottom-left,
     .maplibregl-ctrl-bottom-right {
-      bottom: calc(var(--safe-bottom) + 0px) !important;
+      bottom: calc(var(--safe-bottom) + 2px) !important;
       z-index: 70 !important;
       pointer-events: auto !important;
-    }
-
-    .maplibregl-ctrl-bottom-left {
-      left: calc(env(safe-area-inset-left, 0px) + 14px) !important;
     }
 
     .maplibregl-ctrl-attrib {
@@ -689,7 +685,7 @@
     }
 
     .maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib {
-      margin-left: 0 !important;
+      margin-left: 6px !important;
       margin-bottom: 2px !important;
     }
 
@@ -916,7 +912,7 @@
         <div class="modal-head">
           <div>
             <div id="exportModalTitle" class="title">出力</div>
-            <div class="subtitle">ZIPには track.gpx と photos フォルダのみを含みます</div>
+            <div class="subtitle">QGISで使うなら ZIP を推奨</div>
           </div>
           <button id="closeExportModalBtn" class="icon-btn" type="button" aria-label="閉じる">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -930,14 +926,14 @@
             <div class="metric"><div class="label">推定距離</div><div id="exportDistance" class="value">0 m</div></div>
           </div>
           <div class="hint">
-            GPXにはトラック点と地区踏査ポイントを含みます。ZIP出力では track.gpx と photos フォルダのみを書き出します。
+            GPX はトラックとポイントを含みます。写真はGPX内に埋め込まず、ZIP出力で GeoJSON と写真ファイルを一緒に書き出します。
           </div>
           <div class="inline-actions">
-            <button id="downloadGpxBtn" class="btn-soft" type="button">track.gpx を保存</button>
+            <button id="downloadGpxBtn" class="btn-soft" type="button">GPXを保存</button>
             <button id="downloadZipBtn" class="btn-primary" type="button">ZIPを保存</button>
           </div>
           <div class="hint">
-            ZIPには track.gpx と、写真がある場合は photos フォルダのみを含めます。
+            ZIPには track.gpx と photos フォルダのみを含めます。
           </div>
         </div>
         <div class="modal-foot">
@@ -1057,7 +1053,6 @@
       pointDraftSource: 'current',
       suppressMapClickUntil: 0,
       isPaused: false,
-      wakeRetryTimer: null,
       settings: {
         mapStyle: 'osmfj-poi',
         gpsMode: 'high'
@@ -1077,7 +1072,6 @@
       await initMap();
       await restoreSession();
       initPWA();
-      startWakeLockMonitor();
       renderState();
       showToast('Find LngLat を読み込みました。');
     }
@@ -1090,7 +1084,7 @@
         'pointModeModal','closePointModeModalBtn','pointCurrentBtn','pointManualBtn','manualModeBanner','manualModeEditBtn','manualModeCancelBtn','pointModal','closePointModalBtn','cancelPointBtn','savePointBtn','capturePhotoBtn','removePhotoBtn',
         'photoInput','photoPreview','photoMeta','pointTitleInput','pointTagSelect','pointMemo1Input','pointMemo2Input',
         'pointModalTitle','pointModalSub','pointLat','pointLng','pointEle','pointAcc','exportModal','closeExportModalBtn','downloadGpxBtn',
-        'downloadZipBtn','finishAndClearBtn','exportTrackCount','exportPointCount',
+        'downloadZipBtn','downloadJsonBtn','finishAndClearBtn','exportTrackCount','exportPointCount',
         'exportPhotoCount','exportDistance','stopConfirmModal','closeStopConfirmModalBtn','continueTrackingBtn','pauseExportBtn','discardTrackingBtn','helpModal','closeHelpModalBtn','installHintBtn','toastWrap'
       ].forEach(id => els[id] = document.getElementById(id));
     }
@@ -2207,12 +2201,10 @@
       els.gpsModeSelect.value = appState.settings.gpsMode;
 
       els.trackDockBtn.classList.toggle('active', appState.isTracking || appState.isPaused);
-      els.trackDockBtn.querySelector('.dock-label').textContent = appState.isTracking ? '地区踏査終了' : (appState.isPaused ? '地区踏査再開' : '地区踏査開始');
-      els.trackDockBtn.querySelector('.dock-sub').textContent = appState.isTracking ? '確認画面へ' : (appState.isPaused ? '続きから再開' : '位置記録');
+      els.trackDockBtn.querySelector('.dock-label').textContent = appState.isTracking ? '踏査終了' : (appState.isPaused ? '踏査再開' : '踏査開始');
+      els.trackDockBtn.querySelector('.dock-sub').textContent = appState.isTracking ? '記録停止' : (appState.isPaused ? '続きから再開' : '位置記録');
       els.pointDockBtn.disabled = !appState.isTracking;
       els.pointDockBtn.classList.toggle('active', appState.manualPointMode);
-      els.metricDockBtn.disabled = !appState.isTracking;
-      els.metricDockBtn.classList.toggle('active', appState.isTracking);
 
       if (!appState._gpsStatus) setGpsStatus('bad', 'GPS待機');
       if (!appState._trackStatus) setTrackStatus(appState.isTracking ? 'ok' : (appState.isPaused ? 'warn' : 'bad'), appState.isTracking ? '記録中' : (appState.isPaused ? '一時停止中' : '未記録'));
@@ -2274,16 +2266,6 @@
       showToast('Android はブラウザメニューから「ホーム画面に追加」。iPhone は共有メニューから「ホーム画面に追加」です。', 4200);
     }
 
-    function startWakeLockMonitor() {
-      if (appState.wakeRetryTimer) clearInterval(appState.wakeRetryTimer);
-      appState.wakeRetryTimer = window.setInterval(async () => {
-        if (!appState.isTracking) return;
-        if (document.visibilityState !== 'visible') return;
-        if (appState.wakeLock) return;
-        await requestWakeLock();
-      }, 3000);
-    }
-
     function initPWA() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js?v=' + encodeURIComponent(APP_VERSION)).catch(console.warn);
@@ -2338,59 +2320,110 @@
     }
 
     function generateGPX(trackPoints, waypoints) {
-      const trackPrepared = buildTrackPointExtensions(trackPoints);
-      const waypointPrepared = buildWaypointExtensions(waypoints);
-      const trkpts = trackPrepared.map(tp => `      <trkpt lat="${tp.lat}" lon="${tp.lng}">
-        ${tp.eleXml}
-        <time>${escapeXml(tp.timeIsoJst)}</time>
-        <extensions>
-          <track_seg_id>${escapeXml(tp.trackSegId)}</track_seg_id>
-          <time1_JST>${escapeXml(tp.time1Jst)}</time1_JST>
-          <time2_JST>${escapeXml(tp.time2Jst)}</time2_JST>
-          <ele_m>${escapeXml(tp.eleText)}</ele_m>
-          <distance_km>${escapeXml(tp.distanceKmText)}</distance_km>
-          <speed_km_h>${escapeXml(tp.speedKmhText)}</speed_km_h>
-          <accuracy_m>${escapeXml(tp.accuracyText)}</accuracy_m>
-        </extensions>
-      </trkpt>`).join('\n');
-      const wpts = waypointPrepared.map(wp => {
-        const linkBlock = wp.photoFilename ? `\n    <link href="${escapeXml(wp.photoPath)}"><text>${escapeXml(wp.photoFilename)}</text><type>${escapeXml(wp.photoMimeType || 'image/webp')}</type></link>` : '';
-        return `  <wpt lat="${wp.lat}" lon="${wp.lng}">
-    ${wp.eleXml}
-    <time>${escapeXml(wp.timeIsoJst)}</time>
-    <name>${escapeXml(wp.title || '')}</name>${linkBlock}
-    <extensions>
-      <waypoint_id>${escapeXml(wp.waypointId)}</waypoint_id>
-      <time1_JST>${escapeXml(wp.time1Jst)}</time1_JST>
-      <time2_JST>${escapeXml(wp.time2Jst)}</time2_JST>
-      <ele_m>${escapeXml(wp.eleText)}</ele_m>
-      <accuracy_m>${escapeXml(wp.accuracyText)}</accuracy_m>
-      <title>${escapeXml(wp.title || '')}</title>
-      <memo1>${escapeXml(wp.memo1 || '')}</memo1>
-      <memo2>${escapeXml(wp.memo2 || '')}</memo2>
-      <hasphoto>${escapeXml(wp.hasPhotoText)}</hasphoto>
-      <photoId>${escapeXml(wp.photoId || '')}</photoId>
-      <photoFilename>${escapeXml(wp.photoFilename || '')}</photoFilename>
-      <photoPath>${escapeXml(wp.photoPath || '')}</photoPath>
-      <photoThumbDataUrl>${escapeXml(wp.photoThumbDataUrl || '')}</photoThumbDataUrl>
-    </extensions>
-  </wpt>`;
+      const ns = 'https://gisphn.github.io/findlnglat/ns/1.0';
+      const cumulative = buildCumulativeDistances(trackPoints);
+      const trkpts = trackPoints.map((tp, idx) => {
+        const jst = formatJstParts(tp.recordedAt);
+        const speedKmh = getTrackSpeedKmh(trackPoints, idx);
+        const ext = [
+          `          <fl:track_seg_id>${idx + 1}</fl:track_seg_id>`,
+          `          <fl:time1_JST>${escapeXml(jst.date)}</fl:time1_JST>`,
+          `          <fl:time2_JST>${escapeXml(jst.time)}</fl:time2_JST>`,
+          `          <fl:ele_m>${formatOptionalDecimal(tp.ele, 2)}</fl:ele_m>`,
+          `          <fl:distance_km>${formatRequiredDecimal(cumulative[idx] / 1000, 2)}</fl:distance_km>`,
+          `          <fl:speed_km_h>${formatOptionalDecimal(speedKmh, 2)}</fl:speed_km_h>`,
+          `          <fl:accuracy_m>${formatOptionalDecimal(tp.accuracy, 2)}</fl:accuracy_m>`
+        ].join('\n');
+        return [
+          `      <trkpt lat="${tp.lat}" lon="${tp.lng}">`,
+          `        ${tp.ele != null ? `<ele>${Number(tp.ele).toFixed(2)}</ele>` : ''}`,
+          `        <time>${escapeXml(jst.iso)}</time>`,
+          `        <extensions>`,
+          ext,
+          `        </extensions>`,
+          `      </trkpt>`
+        ].join('\n');
       }).join('\n');
-      const metadataTime = formatIsoJst(new Date());
-      return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1">
-  <metadata>
-    <name>Find LngLat Track</name>
-    <time>${escapeXml(metadataTime)}</time>
-  </metadata>
-  <trk>
-    <name>地区踏査トラック</name>
-    <trkseg>
-${trkpts}
-    </trkseg>
-  </trk>
-${wpts}
-</gpx>`;
+
+      const wpts = waypoints.map((wp, idx) => {
+        const jst = formatJstParts(wp.recordedAt);
+        const ext = [
+          `      <fl:waypoint_id>${idx + 1}</fl:waypoint_id>`,
+          `      <fl:time1_JST>${escapeXml(jst.date)}</fl:time1_JST>`,
+          `      <fl:time2_JST>${escapeXml(jst.time)}</fl:time2_JST>`,
+          `      <fl:ele_m>${formatOptionalDecimal(wp.ele, 2)}</fl:ele_m>`,
+          `      <fl:accuracy_m>${formatOptionalDecimal(wp.accuracy, 2)}</fl:accuracy_m>`,
+          `      <fl:title>${escapeXml(wp.title || '')}</fl:title>`,
+          `      <fl:memo1>${escapeXml(wp.memo1 || '')}</fl:memo1>`,
+          `      <fl:memo2>${escapeXml(wp.memo2 || '')}</fl:memo2>`,
+          `      <fl:hasphoto>${wp.hasPhoto ? 'true' : 'false'}</fl:hasphoto>`,
+          `      <fl:photoId>${escapeXml(wp.photoId || '')}</fl:photoId>`,
+          `      <fl:photoFilename>${escapeXml(wp.photoFilename || '')}</fl:photoFilename>`,
+          `      <fl:photoPath>${escapeXml(wp.photoFilename ? `photos/${wp.photoFilename}` : '')}</fl:photoPath>`,
+          `      <fl:photoThumbDataUrl>${escapeXml(wp.photoThumbDataUrl || '')}</fl:photoThumbDataUrl>`
+        ].join('\n');
+        return [
+          `  <wpt lat="${wp.lat}" lon="${wp.lng}">`,
+          `    ${wp.ele != null ? `<ele>${Number(wp.ele).toFixed(2)}</ele>` : ''}`,
+          `    <time>${escapeXml(jst.iso)}</time>`,
+          `    <name>${escapeXml(wp.title || '')}</name>`,
+          `    <extensions>`,
+          ext,
+          `    </extensions>`,
+          `  </wpt>`
+        ].join('\n');
+      }).join('\n');
+
+      return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1" xmlns:fl="${ns}">\n  <metadata>\n    <name>Find LngLat Track</name>\n    <time>${escapeXml(formatJstParts(new Date().toISOString()).iso)}</time>\n  </metadata>\n  <trk>\n    <name>地区踏査トラック</name>\n    <trkseg>\n${trkpts}\n    </trkseg>\n  </trk>\n${wpts}\n</gpx>`;
+    }
+
+    function buildCumulativeDistances(trackPoints) {
+      const out = [];
+      let total = 0;
+      for (let i = 0; i < trackPoints.length; i++) {
+        if (i > 0) {
+          total += haversine(trackPoints[i - 1].lat, trackPoints[i - 1].lng, trackPoints[i].lat, trackPoints[i].lng);
+        }
+        out.push(total);
+      }
+      return out;
+    }
+
+    function getTrackSpeedKmh(trackPoints, idx) {
+      const tp = trackPoints[idx];
+      if (Number.isFinite(tp?.speed)) {
+        return Number(tp.speed) * 3.6;
+      }
+      if (idx <= 0) return null;
+      const prev = trackPoints[idx - 1];
+      const dt = (new Date(tp.recordedAt) - new Date(prev.recordedAt)) / 1000;
+      if (!Number.isFinite(dt) || dt <= 0) return null;
+      const distM = haversine(prev.lat, prev.lng, tp.lat, tp.lng);
+      return (distM / dt) * 3.6;
+    }
+
+    function formatJstParts(value) {
+      const d = new Date(value);
+      const jstDate = new Date(d.getTime() + (9 * 60 * 60 * 1000));
+      const y = jstDate.getUTCFullYear();
+      const m = String(jstDate.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(jstDate.getUTCDate()).padStart(2, '0');
+      const hh = String(jstDate.getUTCHours()).padStart(2, '0');
+      const mm = String(jstDate.getUTCMinutes()).padStart(2, '0');
+      const ss = String(jstDate.getUTCSeconds()).padStart(2, '0');
+      return {
+        date: `${y}/${m}/${day}`,
+        time: `${hh}:${mm}:${ss}`,
+        iso: `${y}-${m}-${day}T${hh}:${mm}:${ss}+09:00`
+      };
+    }
+
+    function formatOptionalDecimal(value, digits = 2) {
+      return Number.isFinite(value) ? Number(value).toFixed(digits) : '';
+    }
+
+    function formatRequiredDecimal(value, digits = 2) {
+      return Number.isFinite(value) ? Number(value).toFixed(digits) : (0).toFixed(digits);
     }
 
     function generateWaypointOnlyGPX(waypoints) {
@@ -2399,86 +2432,6 @@ ${wpts}
         return `  <wpt lat="${wp.lat}" lon="${wp.lng}">\n    ${wp.ele != null ? `<ele>${wp.ele}</ele>` : ''}\n    <time>${escapeXml(wp.recordedAt)}</time>\n    <name>${escapeXml(wp.title || '')}</name>\n    <cmt>${escapeXml(wp.memo1 || '')}</cmt>\n    <desc>${escapeXml((wp.memo2 || '') + (wp.tag ? ` / ${wp.tag}` : ''))}</desc>${linkBlock}\n  </wpt>`;
       }).join('\n');
       return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Find LngLat" xmlns="http://www.topografix.com/GPX/1/1">\n${wpts}\n</gpx>`;
-    }
-
-
-    function buildTrackPointExtensions(trackPoints) {
-      let cumulative = 0;
-      return trackPoints.map((tp, index) => {
-        if (index > 0) {
-          const prev = trackPoints[index - 1];
-          cumulative += haversine(prev.lat, prev.lng, tp.lat, tp.lng);
-        }
-        const dt = new Date(tp.recordedAt || Date.now());
-        const speedFromCalc = computeSpeedKmh(trackPoints, index);
-        const speedFromSensor = Number.isFinite(tp.speed) ? Number(tp.speed) * 3.6 : null;
-        const speedKmh = speedFromSensor != null ? speedFromSensor : speedFromCalc;
-        return {
-          ...tp,
-          trackSegId: String(index + 1),
-          timeIsoJst: formatIsoJst(dt),
-          time1Jst: formatDateJst(dt),
-          time2Jst: formatTimeJst(dt),
-          eleXml: tp.ele != null ? `<ele>${Number(tp.ele).toFixed(2)}</ele>` : '',
-          eleText: tp.ele != null ? Number(tp.ele).toFixed(2) : '',
-          distanceKmText: (cumulative / 1000).toFixed(2),
-          speedKmhText: speedKmh != null ? Number(speedKmh).toFixed(2) : '',
-          accuracyText: tp.accuracy != null ? Number(tp.accuracy).toFixed(2) : ''
-        };
-      });
-    }
-
-    function buildWaypointExtensions(waypoints) {
-      return waypoints.map((wp, index) => {
-        const dt = new Date(wp.recordedAt || Date.now());
-        return {
-          ...wp,
-          waypointId: String(index + 1),
-          timeIsoJst: formatIsoJst(dt),
-          time1Jst: formatDateJst(dt),
-          time2Jst: formatTimeJst(dt),
-          eleXml: wp.ele != null ? `<ele>${Number(wp.ele).toFixed(2)}</ele>` : '',
-          eleText: wp.ele != null ? Number(wp.ele).toFixed(2) : '',
-          accuracyText: wp.accuracy != null ? Number(wp.accuracy).toFixed(2) : '',
-          hasPhotoText: wp.hasPhoto ? 'true' : 'false',
-          photoPath: wp.photoFilename ? `photos/${wp.photoFilename}` : ''
-        };
-      });
-    }
-
-    function computeSpeedKmh(trackPoints, index) {
-      const curr = trackPoints[index];
-      if (!curr) return null;
-      const neighbors = [];
-      if (index > 0) neighbors.push(trackPoints[index - 1]);
-      if (index < trackPoints.length - 1) neighbors.push(trackPoints[index + 1]);
-      for (const other of neighbors) {
-        const t1 = new Date(curr.recordedAt || Date.now()).getTime();
-        const t0 = new Date(other.recordedAt || Date.now()).getTime();
-        const seconds = Math.abs(t1 - t0) / 1000;
-        if (!seconds) continue;
-        const meters = haversine(curr.lat, curr.lng, other.lat, other.lng);
-        return (meters / seconds) * 3.6;
-      }
-      return null;
-    }
-
-    function formatDateJst(dateLike) {
-      const dt = new Date(dateLike);
-      const jst = new Date(dt.getTime() + 9 * 60 * 60 * 1000);
-      return `${jst.getUTCFullYear()}/${String(jst.getUTCMonth() + 1).padStart(2, '0')}/${String(jst.getUTCDate()).padStart(2, '0')}`;
-    }
-
-    function formatTimeJst(dateLike) {
-      const dt = new Date(dateLike);
-      const jst = new Date(dt.getTime() + 9 * 60 * 60 * 1000);
-      return `${String(jst.getUTCHours()).padStart(2, '0')}:${String(jst.getUTCMinutes()).padStart(2, '0')}:${String(jst.getUTCSeconds()).padStart(2, '0')}`;
-    }
-
-    function formatIsoJst(dateLike) {
-      const dt = new Date(dateLike);
-      const jst = new Date(dt.getTime() + 9 * 60 * 60 * 1000);
-      return `${jst.getUTCFullYear()}-${String(jst.getUTCMonth() + 1).padStart(2, '0')}-${String(jst.getUTCDate()).padStart(2, '0')}T${String(jst.getUTCHours()).padStart(2, '0')}:${String(jst.getUTCMinutes()).padStart(2, '0')}:${String(jst.getUTCSeconds()).padStart(2, '0')}+09:00`;
     }
 
     function buildQgisReadme() {
