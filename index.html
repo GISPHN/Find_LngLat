@@ -1055,7 +1055,7 @@
       isPaused: false,
       settings: {
         mapStyle: 'osmfj-poi',
-        gpsMode: 'high'
+        gpsMode: 'balanced'
       }
     };
 
@@ -2353,6 +2353,7 @@
           `      <fl:title>${escapeXml(wp.title || '')}</fl:title>`,
           `      <fl:memo1>${escapeXml(wp.memo1 || '')}</fl:memo1>`,
           `      <fl:memo2>${escapeXml(wp.memo2 || '')}</fl:memo2>`,
+          `      <fl:tag>${escapeXml(wp.tag || '')}</fl:tag>`,
           `      <fl:hasphoto>${wp.hasPhoto ? 'true' : 'false'}</fl:hasphoto>`,
           `      <fl:photoId>${escapeXml(wp.photoId || '')}</fl:photoId>`,
           `      <fl:photoFilename>${escapeXml(wp.photoFilename || '')}</fl:photoFilename>`,
